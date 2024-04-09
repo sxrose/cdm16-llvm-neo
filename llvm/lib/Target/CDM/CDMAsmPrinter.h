@@ -12,10 +12,16 @@
 #include "llvm/IR/GlobalVariable.h"
 #include "llvm/MC/MCSection.h"
 #include "llvm/MC/MCStreamer.h"
+#include "llvm/ADT/StringMap.h"
+
 namespace llvm {
 
 class CDMAsmPrinter : public AsmPrinter {
   CDMMCInstLower MCInstLower;
+  llvm::StringMap<int> sourceFiles;
+
+  std::optional<int> getSourceFileIndex(StringRef checksum);
+  void collectAndEmitSourceFiles(Module &module);
 
 public:
   explicit CDMAsmPrinter(TargetMachine &TM,
