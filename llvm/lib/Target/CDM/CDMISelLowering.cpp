@@ -73,14 +73,12 @@ SDValue CDMISelLowering::LowerFormalArguments(
 
     // The stack pointer offset is relative to the caller stack frame.
     int FI = MFI.CreateFixedObject(ValVT.getSizeInBits() / 8,
-                                   VA.getLocMemOffset(), true);
+                                   4 + VA.getLocMemOffset(), true);
     SDValue FIPtr = DAG.getFrameIndex(FI, getPointerTy(MF.getDataLayout()));
 
     // Create load nodes to retrieve arguments from the stack
-    InVals.push_back(
-        DAG.getLoad(VA.getValVT(), DL, Chain,
-                    FIPtr,
-                    MachinePointerInfo::getFixedStack(MF, FI)));
+    InVals.push_back(DAG.getLoad(VA.getValVT(), DL, Chain, FIPtr,
+                                 MachinePointerInfo::getFixedStack(MF, FI)));
   }
 
   return Chain;
@@ -243,14 +241,19 @@ SDValue CDMISelLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
 
     assert(VA.isMemLoc());
 
-    // auto PtrVT = getPointerTy(DAG.getDataLayout());
+    auto PtrVT = getPointerTy(DAG.getDataLayout());
     // SDValue StackPtr = DAG.getRegister(CDM::SP, PtrVT);
-    // SDValue PtrOff = DAG.getIntPtrConstant(VA.getLocMemOffset(), Loc);
-    // PtrOff = DAG.getNode(CDM::ADD, Loc, PtrVT, StackPtr, PtrOff);
+    SDValue StackPtr = DAG.getCopyFromReg(Chain, Loc, CDM::SP, PtrVT);
+    SDValue PtrOff = DAG.getIntPtrConstant(VA.getLocMemOffset(), Loc);
+    PtrOff = DAG.getNode(ISD::ADD, Loc, PtrVT, StackPtr, PtrOff);
 
-    int FI = MFI.CreateFixedObject(VA.getValVT().getSizeInBits() / 8,
-                                   VA.getLocMemOffset(), true);
-    SDValue PtrOff = DAG.getFrameIndex(FI, getPointerTy(MF.getDataLayout()));
+    // int FI = MFI.CreateFixedObject(VA.getValVT().getSizeInBits() / 8,
+    //                                VA.getLocMemOffset(), true);
+
+    // todo: check how to set ptroff properly
+    // SDValue PtrOff = DAG.getFrameIndex(FI, getPointerTy(MF.getDataLayout()));
+    // SDValue PtrOff =
+    //     DAG.getRegister(CDM::FP, getPointerTy(DAG.getDataLayout()));
     MemOpChains.push_back(
         DAG.getStore(Chain, Loc, Arg, PtrOff, MachinePointerInfo()));
   }
@@ -320,6 +323,7 @@ SDValue CDMISelLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
   return LowerCallResult(Chain, InFlag, CallConv, IsVarArg, Ins, Loc, DAG,
                          InVals);
 }
+
 SDValue CDMISelLowering::LowerCallResult(
     SDValue Chain, SDValue InGlue, CallingConv::ID CallConv, bool isVarArg,
     const SmallVectorImpl<ISD::InputArg> &Ins, SDLoc dl, SelectionDAG &DAG,

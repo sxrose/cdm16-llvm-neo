@@ -30,7 +30,7 @@
 
 using namespace llvm;
 
-extern "C" void LLVMInitializeCDMAsmPrinter(){
+extern "C" void LLVMInitializeCDMAsmPrinter() {
   RegisterAsmPrinter<CDMAsmPrinter> X(getTheCDMTarget());
 }
 void CDMAsmPrinter::emitInstruction(const MachineInstr *Instr) {
@@ -61,14 +61,15 @@ void CDMAsmPrinter::emitFunctionBodyEnd() {
 }
 void CDMAsmPrinter::emitFunctionEntryLabel() {
   OutStreamer->emitLabel(CurrentFnSym);
-//  OutStreamer->emitRawText(llvm::formatv("{0}>", CurrentFnSym->getName()));
+  //  OutStreamer->emitRawText(llvm::formatv("{0}>", CurrentFnSym->getName()));
 }
 void CDMAsmPrinter::emitLinkage(const GlobalValue *GV, MCSymbol *GVSym) const {
   // not needed (stub)
 }
 void CDMAsmPrinter::emitFunctionHeader() {
   // If something is missing, check original implementation
-  // We don't want to emit anything here, but we want to preserve some of the original functionality
+  // We don't want to emit anything here, but we want to preserve some of the
+  // original functionality
   const Function &F = MF->getFunction();
 
   OutStreamer->getCommentOS()
@@ -85,46 +86,54 @@ void CDMAsmPrinter::emitFunctionHeader() {
   OutStreamer->switchSection(MF->getSection());
 
   emitFunctionEntryLabel();
-
 }
 void CDMAsmPrinter::emitStartOfAsmFile(Module &module) {
-    auto FN = module.getSourceFileName();
+  auto FN = module.getSourceFileName();
 
-    std::replace_if(FN.begin(), FN.end(), [](char C){return !(isAlnum(C) || C == '_');}, '_');
-    OutStreamer -> emitRawText(llvm::formatv("rsect _{0}_{1}\n\n", FN, rand()));
+  std::replace_if(
+      FN.begin(), FN.end(), [](char C) { return !(isAlnum(C) || C == '_'); },
+      '_');
+  OutStreamer->emitRawText(llvm::formatv("rsect _{0}_{1}\n\n", FN, rand()));
 
-    std::set<std::string> prefixes_to_ignore = {"llvm.lifetime.", "llvm."};
+  std::set<std::string> prefixes_to_ignore = {"llvm.lifetime.", "llvm."};
 
-    for(auto &GV: module.global_objects()){
-      auto Linkage = GV.getLinkage();
-      if (GV.isDeclaration() and std::find_if(prefixes_to_ignore.begin(), prefixes_to_ignore.end(), [&](auto pref){return GV.getName().starts_with(pref);}) == prefixes_to_ignore.end()){
-        OutStreamer ->emitRawText(llvm::formatv("{0}: ext\n", GV.getName()));
-      } else if(GV.isDeclaration() and GV.getName() == "llvm.memset.p0.i16") { // TODO: handle intrinsics correctly, this is temporary fix
-        OutStreamer ->emitRawText(llvm::formatv("{0}: ext\n", "memset"));
-      }
+  for (auto &GV : module.global_objects()) {
+    auto Linkage = GV.getLinkage();
+    if (GV.isDeclaration() and
+        std::find_if(prefixes_to_ignore.begin(), prefixes_to_ignore.end(),
+                     [&](auto pref) {
+                       return GV.getName().starts_with(pref);
+                     }) == prefixes_to_ignore.end()) {
+      OutStreamer->emitRawText(llvm::formatv("{0}: ext\n", GV.getName()));
+    } else if (GV.isDeclaration() and
+               GV.getName() ==
+                   "llvm.memset.p0.i16") { // TODO: handle intrinsics correctly,
+                                           // this is temporary fix
+      OutStreamer->emitRawText(llvm::formatv("{0}: ext\n", "memset"));
     }
+  }
 
-    // TODO: this is a fake move. Remove this when actual movens is implemented
-    OutStreamer ->emitRawText("\n\nmacro movens/2\npush $1\npop $2\nmend\n\n");
+  // TODO: this is a fake move. Remove this when actual movens is implemented
+  OutStreamer->emitRawText("\n\nmacro movens/2\npush $1\npop $2\nmend\n\n");
 }
 void CDMAsmPrinter::emitEndOfAsmFile(Module &module) {
-  OutStreamer-> emitRawText("end.");
+  OutStreamer->emitRawText("end.");
 }
-//void CDMAsmPrinter::emitStartOfAsmFile(Module &module) {
+// void CDMAsmPrinter::emitStartOfAsmFile(Module &module) {
 ////  AsmPrinter::emitStartOfAsmFile(module);
 //}
 
 // TODO: implement target streamer
-CDMAsmTargetStreamer::CDMAsmTargetStreamer(MCStreamer &S): MCTargetStreamer(S) {}
-void CDMAsmTargetStreamer::emitLabel(MCSymbol *Symbol) {
-
-}
+CDMAsmTargetStreamer::CDMAsmTargetStreamer(MCStreamer &S)
+    : MCTargetStreamer(S) {}
+void CDMAsmTargetStreamer::emitLabel(MCSymbol *Symbol) {}
 void CDMAsmTargetStreamer::changeSection(const MCSection *CurSection,
                                          MCSection *Section,
                                          const MCExpr *SubSection,
                                          raw_ostream &OS) {
   // This is a stub. We don't have sections in cdm
   // Section->
-  // OS << llvm::formatv("rsect[{0}] ", Section->getName()/*Without first dot*/);
-  OS << llvm::formatv("### SECTION: {0}\n", Section->getName());
+  // OS << llvm::formatv("rsect[{0}] ", Section->getName()/*Without first
+  // dot*/);
+  OS << llvm::formatv("### SECTIONN: {0}\n", Section->getName());
 }

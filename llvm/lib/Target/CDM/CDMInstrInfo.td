@@ -187,7 +187,7 @@ def ssw: StoreMStack<"ssw", store_a, mem, addr_on_frame, 0>;
 def ssb: StoreMStack<"ssb", truncstorei8, mem, addr_on_frame, 0>;
 def lsb:  LoadMStack<"lsb", zextloadi8, mem, addr_on_frame, 0>;
 def lssb: LoadMStack<"lssb", sextloadi8, mem, addr_on_frame, 0>;
-} 
+}
 def: Pat <(i16 (extloadi8 addr_on_frame:$src)), (lsb addr_on_frame:$src)>;
 
 // def stw: StoreM<"stw", store, mem, addr, 0>;
