@@ -241,19 +241,12 @@ SDValue CDMISelLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
 
     assert(VA.isMemLoc());
 
+    // todo: fix erasing local variables
     auto PtrVT = getPointerTy(DAG.getDataLayout());
-    // SDValue StackPtr = DAG.getRegister(CDM::SP, PtrVT);
     SDValue StackPtr = DAG.getCopyFromReg(Chain, Loc, CDM::SP, PtrVT);
     SDValue PtrOff = DAG.getIntPtrConstant(VA.getLocMemOffset(), Loc);
     PtrOff = DAG.getNode(ISD::ADD, Loc, PtrVT, StackPtr, PtrOff);
 
-    // int FI = MFI.CreateFixedObject(VA.getValVT().getSizeInBits() / 8,
-    //                                VA.getLocMemOffset(), true);
-
-    // todo: check how to set ptroff properly
-    // SDValue PtrOff = DAG.getFrameIndex(FI, getPointerTy(MF.getDataLayout()));
-    // SDValue PtrOff =
-    //     DAG.getRegister(CDM::FP, getPointerTy(DAG.getDataLayout()));
     MemOpChains.push_back(
         DAG.getStore(Chain, Loc, Arg, PtrOff, MachinePointerInfo()));
   }
