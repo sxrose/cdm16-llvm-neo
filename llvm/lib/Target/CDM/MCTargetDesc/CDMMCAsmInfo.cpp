@@ -22,7 +22,7 @@ CDMMCAsmInfo::CDMMCAsmInfo(const Triple &TheTriple) {
   AscizDirective = 0;
   PrivateGlobalPrefix = "__L";
   PrivateLabelPrefix = "__L";
-//  hasPairedDoubleQuoteStringConstants()
+  //  hasPairedDoubleQuoteStringConstants()
   HasPairedDoubleQuoteStringConstants = false;
 }
 } // namespace llvm

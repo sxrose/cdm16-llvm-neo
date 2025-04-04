@@ -7,24 +7,20 @@
 
 #include "CDMMCInstLower.h"
 
-#include "llvm/MC/MCStreamer.h"
 #include "llvm/CodeGen/AsmPrinter.h"
+#include "llvm/MC/MCStreamer.h"
 namespace llvm {
 
-class CDMAsmPrinter: public AsmPrinter{
+class CDMAsmPrinter : public AsmPrinter {
   CDMMCInstLower MCInstLower;
 
 public:
   explicit CDMAsmPrinter(TargetMachine &TM,
-                          std::unique_ptr<MCStreamer> Streamer)
-      : AsmPrinter(TM, std::move(Streamer)),
-        MCInstLower(*this)
-  {}
+                         std::unique_ptr<MCStreamer> Streamer)
+      : AsmPrinter(TM, std::move(Streamer)), MCInstLower(*this) {}
   void emitFunctionEntryLabel() override;
 
-  StringRef getPassName() const override {
-    return "CDM Assembly Printer";
-  }
+  StringRef getPassName() const override { return "CDM Assembly Printer"; }
 
   void emitInstruction(const MachineInstr *Instr) override;
   void emitFunctionBodyStart() override;
@@ -36,7 +32,7 @@ public:
   void emitEndOfAsmFile(Module &module) override;
 };
 
-class CDMAsmTargetStreamer: public MCTargetStreamer {
+class CDMAsmTargetStreamer : public MCTargetStreamer {
 
 public:
   explicit CDMAsmTargetStreamer(MCStreamer &S);

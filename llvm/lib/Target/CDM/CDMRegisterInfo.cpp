@@ -23,14 +23,11 @@ namespace llvm {
 
 // TODO: what is this argument? IDK, on ARM it's LR, on x86 it is LR. WTF?
 // I'l leave it as PC for now
-CDMRegisterInfo::CDMRegisterInfo(): CDMGenRegisterInfo(CDM::PC) {}
-
+CDMRegisterInfo::CDMRegisterInfo() : CDMGenRegisterInfo(CDM::PC) {}
 
 BitVector CDMRegisterInfo::getReservedRegs(const MachineFunction &MF) const {
   BitVector Reserved(getNumRegs());
-  static const std::array ReservedCPURegs {
-      CDM::FP, CDM::SP, CDM::PSR, CDM::PC
-  };
+  static const std::array ReservedCPURegs{CDM::FP, CDM::SP, CDM::PSR, CDM::PC};
 
   for (unsigned I = 0; I < ReservedCPURegs.size(); ++I)
     Reserved.set(ReservedCPURegs[I]);
@@ -60,12 +57,12 @@ bool CDMRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   unsigned i = 0;
   while (!MI.getOperand(i).isFI()) {
     ++i;
-    assert(i < MI.getNumOperands() &&
-           "Instr doesn't have FrameIndex operand!");
+    assert(i < MI.getNumOperands() && "Instr doesn't have FrameIndex operand!");
   }
 
   LLVM_DEBUG(errs() << "\nFunction : " << MF.getFunction().getName() << "\n";
-             errs() << "<--------->\n" << MI);
+             errs() << "<--------->\n"
+                    << MI);
 
   int FrameIndex = MI.getOperand(i).getIndex();
   uint64_t stackSize = MF.getFrameInfo().getStackSize();
@@ -77,7 +74,7 @@ bool CDMRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   // TODO: acknowledge saved regs and other stuff
   // TODO: handle incoming arguments
   MI.getOperand(i).ChangeToImmediate(spOffset);
-//  llvm_unreachable("Unimplemented");
+  //  llvm_unreachable("Unimplemented");
   return false; // instruction not removed
 }
 Register CDMRegisterInfo::getFrameRegister(const MachineFunction &MF) const {

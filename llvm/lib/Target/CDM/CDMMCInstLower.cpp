@@ -4,24 +4,23 @@
 
 #include "CDMMCInstLower.h"
 
+#include "CDMAsmPrinter.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineOperand.h"
-#include "CDMAsmPrinter.h"
 
 namespace llvm {
-CDMMCInstLower::CDMMCInstLower(CDMAsmPrinter &asmPrinter): AsmPrinter(asmPrinter) {}
-void CDMMCInstLower::Initialize(MCContext *C) {
-  Ctx = C;
-}
+CDMMCInstLower::CDMMCInstLower(CDMAsmPrinter &asmPrinter)
+    : AsmPrinter(asmPrinter) {}
+void CDMMCInstLower::Initialize(MCContext *C) { Ctx = C; }
 void CDMMCInstLower::Lower(const MachineInstr *MI, MCInst &OutMI) const {
   OutMI.setOpcode(MI->getOpcode());
-  
-  for(unsigned i = 0, e = MI->getNumOperands(); i != e; i++){
+
+  for (unsigned i = 0, e = MI->getNumOperands(); i != e; i++) {
     const MachineOperand &MO = MI->getOperand(i);
     MCOperand MCOp = LowerOperand(MO);
-    
-    if(MCOp.isValid()){
+
+    if (MCOp.isValid()) {
       OutMI.addOperand(MCOp);
     }
   }
@@ -51,8 +50,6 @@ MCOperand CDMMCInstLower::LowerSymbolOperand(const MachineOperand &MO,
   MCSymbolRefExpr::VariantKind Kind = MCSymbolRefExpr::VK_None;
   const MCSymbol *Symbol;
 
-
-
   switch (MO.getType()) {
   case MachineOperand::MO_ExternalSymbol:
     Symbol = AsmPrinter.GetExternalSymbolSymbol(MO.getSymbolName());
@@ -67,11 +64,11 @@ MCOperand CDMMCInstLower::LowerSymbolOperand(const MachineOperand &MO,
     Symbol = MO.getMBB()->getSymbol();
     break;
 
-//  case MachineOperand::MO_BlockAddress:
-//    Symbol = AsmPrinter.GetBlockAddressSymbol(MO.getBlockAddress());
-//    Offset += MO.getOffset();
-//    break;
-//
+    //  case MachineOperand::MO_BlockAddress:
+    //    Symbol = AsmPrinter.GetBlockAddressSymbol(MO.getBlockAddress());
+    //    Offset += MO.getOffset();
+    //    break;
+    //
   case MachineOperand::MO_JumpTableIndex:
     Symbol = AsmPrinter.GetJTISymbol(MO.getIndex());
     break;
@@ -84,12 +81,13 @@ MCOperand CDMMCInstLower::LowerSymbolOperand(const MachineOperand &MO,
 
   if (Offset) {
     // Assume offset is never negative.
-//    llvm_unreachable("I am still unsure what is an offset");
+    //    llvm_unreachable("I am still unsure what is an offset");
 
-    Expr = Offset > 0 ? MCBinaryExpr::createAdd(Expr, MCConstantExpr::create(Offset, *Ctx),
-                                   *Ctx) : MCBinaryExpr::createSub(Expr, MCConstantExpr::create(-Offset, *Ctx), *Ctx);
+    Expr = Offset > 0 ? MCBinaryExpr::createAdd(
+                            Expr, MCConstantExpr::create(Offset, *Ctx), *Ctx)
+                      : MCBinaryExpr::createSub(
+                            Expr, MCConstantExpr::create(-Offset, *Ctx), *Ctx);
   }
-
 
   return MCOperand::createExpr(Expr);
 }

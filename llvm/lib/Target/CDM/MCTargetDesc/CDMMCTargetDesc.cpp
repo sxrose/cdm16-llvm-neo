@@ -16,7 +16,6 @@
 #include "llvm/Support/FormattedStream.h"
 // #include "CDMTarg"
 
-
 #include "InstPrinter/CDMInstPrinter.h"
 
 #define GET_INSTRINFO_MC_DESC
@@ -29,19 +28,20 @@
 #include "CDMAsmPrinter.h"
 #include "CDMGenRegisterInfo.inc"
 
-namespace llvm{Target &getTheCDMTarget();}
+namespace llvm {
+Target &getTheCDMTarget();
+}
 using namespace llvm;
 
 static MCAsmInfo *createCDMMCAsmInfo(const MCRegisterInfo &MRI,
-                                      const Triple &TT,
-                                      const MCTargetOptions &Options) {
+                                     const Triple &TT,
+                                     const MCTargetOptions &Options) {
   MCAsmInfo *MAI = new CDMMCAsmInfo(TT);
 
-
   // TODO: DWARF support
-//  unsigned SP = MRI.getDwarfRegNum(CDM::SP, true);
-//  MCCFIInstruction Inst = MCCFIInstruction::createDefCfaRegister(nullptr, SP);
-//  MAI->addInitialFrameState(Inst);
+  //  unsigned SP = MRI.getDwarfRegNum(CDM::SP, true);
+  //  MCCFIInstruction Inst = MCCFIInstruction::createDefCfaRegister(nullptr,
+  //  SP); MAI->addInitialFrameState(Inst);
 
   return MAI;
 }
@@ -60,24 +60,24 @@ static MCRegisterInfo *createCDMMCRegisterInfo(const Triple &TT) {
 }
 
 static MCSubtargetInfo *createCDMMCSubtargetInfo(const Triple &TT,
-                                                  StringRef CPU, StringRef FS) {
+                                                 StringRef CPU, StringRef FS) {
   // Figure out what FS does
   return createCDMMCSubtargetInfoImpl(TT, CPU, /*TuneCPU*/ CPU, FS);
   // createCpu0MCSubtargetInfoImpl defined in CDMGenSubtargetInfo.inc
 }
 
 static MCInstPrinter *createCDMMCInstPrinter(const Triple &T,
-                                              unsigned SyntaxVariant,
-                                              const MCAsmInfo &MAI,
-                                              const MCInstrInfo &MII,
-                                              const MCRegisterInfo &MRI) {
+                                             unsigned SyntaxVariant,
+                                             const MCAsmInfo &MAI,
+                                             const MCInstrInfo &MII,
+                                             const MCRegisterInfo &MRI) {
   return new CDMInstPrinter(MAI, MII, MRI);
 }
 
 static MCTargetStreamer *createCDMTargetAsmStreamer(MCStreamer &S,
                                                     formatted_raw_ostream &OS,
                                                     MCInstPrinter *InstPrint,
-                                                    bool isVerboseAsm){
+                                                    bool isVerboseAsm) {
   return new CDMAsmTargetStreamer(S);
 }
 
@@ -86,7 +86,10 @@ extern "C" LLVM_EXTERNAL_VISIBILITY void LLVMInitializeCDMTargetMC() {
 
   TargetRegistry::RegisterMCInstrInfo(getTheCDMTarget(), createCDMMCInstrInfo);
   TargetRegistry::RegisterMCRegInfo(getTheCDMTarget(), createCDMMCRegisterInfo);
-  TargetRegistry::RegisterMCSubtargetInfo(getTheCDMTarget(), createCDMMCSubtargetInfo);
-  TargetRegistry::RegisterMCInstPrinter(getTheCDMTarget(),createCDMMCInstPrinter);
-  TargetRegistry::RegisterAsmTargetStreamer(getTheCDMTarget(), createCDMTargetAsmStreamer);
+  TargetRegistry::RegisterMCSubtargetInfo(getTheCDMTarget(),
+                                          createCDMMCSubtargetInfo);
+  TargetRegistry::RegisterMCInstPrinter(getTheCDMTarget(),
+                                        createCDMMCInstPrinter);
+  TargetRegistry::RegisterAsmTargetStreamer(getTheCDMTarget(),
+                                            createCDMTargetAsmStreamer);
 }

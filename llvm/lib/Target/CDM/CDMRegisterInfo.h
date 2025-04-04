@@ -13,10 +13,10 @@
 
 namespace llvm {
 
-class CDMRegisterInfo: public CDMGenRegisterInfo {
+class CDMRegisterInfo : public CDMGenRegisterInfo {
 public:
   explicit CDMRegisterInfo();
-  const MCPhysReg* getCalleeSavedRegs(const MachineFunction *MF) const override;
+  const MCPhysReg *getCalleeSavedRegs(const MachineFunction *MF) const override;
 
   BitVector getReservedRegs(const MachineFunction &MF) const override;
   bool eliminateFrameIndex(MachineBasicBlock::iterator MI, int SPAdj,

@@ -13,9 +13,8 @@ extern "C" LLVM_EXTERNAL_VISIBILITY void LLVMInitializeCDMTarget() {
   // Register the target.
   RegisterTargetMachine<CDMTargetMachine> X(getTheCDMTarget());
 
-
-//  PassRegistry &PR = *PassRegistry::getPassRegistry();
-//  initializeSparcDAGToDAGISelPass(PR);
+  //  PassRegistry &PR = *PassRegistry::getPassRegistry();
+  //  initializeSparcDAGToDAGISelPass(PR);
 }
 
 static std::string computeDataLayout() {
@@ -30,32 +29,29 @@ CDMTargetMachine::CDMTargetMachine(const Target &T, const Triple &TT,
                                    std::optional<Reloc::Model> RM,
                                    std::optional<CodeModel::Model> CM,
                                    CodeGenOptLevel OL, bool JIT)
-    : LLVMTargetMachine(T, computeDataLayout(), TT, CPU, FS,Options, Reloc::Static, CodeModel::Small, OL),
-      TLOF(std::make_unique<CDMTargetObjectFile>()), dataLayout(computeDataLayout()), DefaultSubtarget(TT, CPU, FS, *this)
-{
+    : LLVMTargetMachine(T, computeDataLayout(), TT, CPU, FS, Options,
+                        Reloc::Static, CodeModel::Small, OL),
+      TLOF(std::make_unique<CDMTargetObjectFile>()),
+      dataLayout(computeDataLayout()), DefaultSubtarget(TT, CPU, FS, *this) {
   initAsmInfo();
-//  Options.EmitAddrsig = false;
+  //  Options.EmitAddrsig = false;
 }
 CDMTargetMachine::~CDMTargetMachine() = default;
 
-
-
 namespace {
-class CDMPassConfig: public TargetPassConfig {
+class CDMPassConfig : public TargetPassConfig {
 public:
   CDMPassConfig(CDMTargetMachine &TM, PassManagerBase &PM)
-  : TargetPassConfig(TM, PM){}
+      : TargetPassConfig(TM, PM) {}
 
   bool addInstSelector() override;
 };
 
 } // namespace
 
-
 TargetPassConfig *CDMTargetMachine::createPassConfig(PassManagerBase &PM) {
   return new CDMPassConfig(*this, PM);
 }
-
 
 bool CDMPassConfig::addInstSelector() {
   addPass(createCDMISelDag(getTM<CDMTargetMachine>(), getOptLevel()));
