@@ -79,6 +79,8 @@ private:
   unsigned SRetReturnReg;
   Register GlobalBaseReg;
   int VarArgsFrameIndex;
+  int RegVarArgFrameindex;
+  int VarArgCount = 0;
 
   std::pair<int, int> InArgFIRange, OutArgFIRange;
   int GPFI;
