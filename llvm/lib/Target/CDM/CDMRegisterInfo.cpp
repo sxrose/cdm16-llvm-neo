@@ -1,17 +1,16 @@
 //
 // Created by ilya on 21.11.23.
 //
-
 #define DEBUG_TYPE "cdm-reg-info"
 
 #include "CDMRegisterInfo.h"
 
-#include "CDMFunctionInfo.h"
-#include "CDMSubtarget.h"
-#include "llvm/ADT/STLExtras.h"
+#include "CDMFrameLowering.h"
+#include "llvm/CodeGen/MachineFrameInfo.h"
+#include "llvm/CodeGen/MachineFunction.h"
+#include "llvm/CodeGen/TargetSubtargetInfo.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/Type.h"
-#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
@@ -51,29 +50,27 @@ bool CDMRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
                                           RegScavenger *RS) const {
   MachineInstr &MI = *II;
   MachineFunction &MF = *MI.getParent()->getParent();
-  MachineFrameInfo &MFI = MF.getFrameInfo();
-  CDMFunctionInfo *Cpu0FI = MF.getInfo<CDMFunctionInfo>();
 
-  unsigned i = 0;
-  while (!MI.getOperand(i).isFI()) {
-    ++i;
-    assert(i < MI.getNumOperands() && "Instr doesn't have FrameIndex operand!");
+  unsigned I = 0;
+  while (!MI.getOperand(I).isFI()) {
+    ++I;
+    assert(I < MI.getNumOperands() && "Instr doesn't have FrameIndex operand!");
   }
 
   LLVM_DEBUG(errs() << "\nFunction : " << MF.getFunction().getName() << "\n";
              errs() << "<--------->\n"
                     << MI);
 
-  int FrameIndex = MI.getOperand(i).getIndex();
-  uint64_t stackSize = MF.getFrameInfo().getStackSize();
-  int64_t spOffset = MF.getFrameInfo().getObjectOffset(FrameIndex);
+  int FrameIndex = MI.getOperand(I).getIndex();
+  uint64_t StackSize = MF.getFrameInfo().getStackSize();
+  int64_t SpOffset = MF.getFrameInfo().getObjectOffset(FrameIndex);
 
   LLVM_DEBUG(errs() << "FrameIndex : " << FrameIndex << "\n"
-                    << "spOffset   : " << spOffset << "\n"
-                    << "stackSize  : " << stackSize << "\n");
+                    << "spOffset   : " << SpOffset << "\n"
+                    << "stackSize  : " << StackSize << "\n");
   // TODO: acknowledge saved regs and other stuff
   // TODO: handle incoming arguments
-  MI.getOperand(i).ChangeToImmediate(spOffset);
+  MI.getOperand(I).ChangeToImmediate(SpOffset);
   //  llvm_unreachable("Unimplemented");
   return false; // instruction not removed
 }
@@ -82,8 +79,8 @@ Register CDMRegisterInfo::getFrameRegister(const MachineFunction &MF) const {
 }
 const uint32_t *
 CDMRegisterInfo::getCallPreservedMask(const MachineFunction &MF,
-                                      CallingConv::ID id) const {
-  switch (id) {
+                                      CallingConv::ID Id) const {
+  switch (Id) {
   case CallingConv::C:
   case CallingConv::Fast:
   case CallingConv::Cold:

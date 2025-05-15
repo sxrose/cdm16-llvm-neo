@@ -5,7 +5,6 @@
 #include "CDMSubtarget.h"
 
 // ..MachineFunction
-#include "CDM.h"
 // ...RegisterInfo
 #include "CDMTargetMachine.h"
 
@@ -17,11 +16,11 @@ using namespace llvm;
 #include "CDMGenSubtargetInfo.inc"
 
 CDMSubtarget::CDMSubtarget(const Triple &TT, StringRef CPU, StringRef FS,
-                           const CDMTargetMachine &_TM)
+                           const CDMTargetMachine &TM)
     : CDMGenSubtargetInfo(TT, CPU, CPU, FS),
       InstrInfo(std::make_unique<CDMInstrInfo>()),
       FrameLowering(std::make_unique<CDMFrameLowering>(*this)),
-      TLInfo(std::make_unique<CDMISelLowering>(_TM, *this))
+      TLInfo(std::make_unique<CDMISelLowering>(TM, *this))
 
 {}
 const TargetFrameLowering *CDMSubtarget::getFrameLowering() const {

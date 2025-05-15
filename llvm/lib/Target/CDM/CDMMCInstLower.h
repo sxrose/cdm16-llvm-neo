@@ -5,10 +5,8 @@
 #ifndef LLVM_CDMMCINSTLOWER_H
 #define LLVM_CDMMCINSTLOWER_H
 
-#include "llvm/ADT/SmallVector.h"
 #include "llvm/CodeGen/MachineOperand.h"
 #include "llvm/MC/MCContext.h"
-#include "llvm/Support/Compiler.h"
 
 namespace llvm {
 class CDMAsmPrinter;

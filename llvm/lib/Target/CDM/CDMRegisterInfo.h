@@ -5,7 +5,6 @@
 #ifndef LLVM_CDMREGISTERINFO_H
 #define LLVM_CDMREGISTERINFO_H
 
-#include "CDM.h"
 #include "llvm/CodeGen/TargetRegisterInfo.h"
 
 #define GET_REGINFO_HEADER
@@ -26,7 +25,7 @@ public:
 
 private:
   const uint32_t *getCallPreservedMask(const MachineFunction &MF,
-                                       CallingConv::ID id) const override;
+                                       CallingConv::ID Id) const override;
 };
 
 } // namespace llvm

@@ -7,8 +7,6 @@
 #include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
-#include "llvm/CodeGen/MachineInstrBuilder.h"
-#include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/SelectionDAGISel.h"
 #include "llvm/CodeGen/SelectionDAGNodes.h"
 #include "llvm/Support/Debug.h"
@@ -36,7 +34,8 @@ void CDMDagToDagIsel::Select(SDNode *N) {
   if (N->getOpcode() == ISD::BR_CC) {
     SelectConditionalBranch(N);
     return;
-  } else if (N->getOpcode() == ISD::BRCOND) {
+  }
+  if (N->getOpcode() == ISD::BRCOND) {
     SelectBRCOND(N);
     return;
   }

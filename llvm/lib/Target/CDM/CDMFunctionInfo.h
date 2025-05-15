@@ -5,10 +5,7 @@
 #ifndef LLVM_CDMFUNCTIONINFO_H
 #define LLVM_CDMFUNCTIONINFO_H
 
-#include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
-#include "llvm/CodeGen/MachineMemOperand.h"
-#include "llvm/CodeGen/PseudoSourceValue.h"
 #include "llvm/CodeGen/Register.h"
 #include "llvm/Target/TargetMachine.h"
 

@@ -4,18 +4,15 @@
 
 #include "CDMFrameLowering.h"
 
-#include "CDMFunctionInfo.h"
 #include "CDMInstrInfo.h"
 #include "CDMSubtarget.h"
+#include "MCTargetDesc/CDMMCTargetDesc.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineModuleInfo.h"
-#include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/RegisterScavenging.h"
-#include "llvm/IR/DataLayout.h"
-#include "llvm/IR/Function.h"
-#include "llvm/Support/CommandLine.h"
+#include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetOptions.h"
 
 namespace llvm {
@@ -80,16 +77,14 @@ MachineBasicBlock::iterator CDMFrameLowering::eliminateCallFramePseudoInstr(
     MachineFunction &MF, MachineBasicBlock &MBB,
     MachineBasicBlock::iterator MI) const {
   int Size = MI->getOperand(0).getImm();
-  if (MI->getOpcode() ==
-      CDM::ADJCALLSTACKUP) // logically there must be ADJCALLSTACKDOWN but for
-                           // some reason it works this way
+  if (MI->getOpcode() == CDM::ADJCALLSTACKDOWN)
     Size = -Size;
 
   auto &TII =
       *static_cast<const CDMInstrInfo *>(MF.getSubtarget().getInstrInfo());
 
   if (Size)
-    TII.adjustStackPtr(-Size, MBB, MI);
+    TII.adjustStackPtr(Size, MBB, MI);
   return MBB.erase(MI);
 }
 } // namespace llvm

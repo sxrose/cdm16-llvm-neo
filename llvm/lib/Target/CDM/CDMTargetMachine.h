@@ -1,7 +1,6 @@
 #ifndef LLVM_LIB_TARGET_CDM_CDMTARGETMACHINE_H
 #define LLVM_LIB_TARGET_CDM_CDMTARGETMACHINE_H
 
-#include "CDMFunctionInfo.h"
 #include "CDMSubtarget.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/Target/TargetMachine.h"
@@ -10,7 +9,7 @@ namespace llvm {
 
 class CDMTargetMachine : public LLVMTargetMachine {
   std::unique_ptr<TargetLoweringObjectFile> TLOF;
-  const DataLayout dataLayout;
+  const DataLayout DataLayout;
   CDMSubtarget DefaultSubtarget;
 
 public:
@@ -21,7 +20,7 @@ public:
                    bool JIT);
   ~CDMTargetMachine() override;
 
-  virtual const DataLayout *getDataLayout() const { return &dataLayout; }
+  virtual const class DataLayout *getDataLayout() const { return &DataLayout; }
   TargetPassConfig *createPassConfig(PassManagerBase &PM) override;
   TargetLoweringObjectFile *getObjFileLowering() const override {
     return TLOF.get();

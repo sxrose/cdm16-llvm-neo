@@ -6,7 +6,6 @@
 #define LLVM_CDMINSTRINFO_H
 
 #include "CDMRegisterInfo.h"
-#include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/TargetInstrInfo.h"
 #include <map>
 
@@ -45,7 +44,7 @@ public:
   const CDMRegisterInfo &getRegisterInfo() const { return RI; }
   void storeRegToStackSlot(MachineBasicBlock &MBB,
                            MachineBasicBlock::iterator I, Register SrcReg,
-                           bool isKill, int FI, const TargetRegisterClass *RC,
+                           bool IsKill, int FI, const TargetRegisterClass *RC,
                            const TargetRegisterInfo *TRI,
                            Register VReg) const override;
   void loadRegFromStackSlot(MachineBasicBlock &MBB,

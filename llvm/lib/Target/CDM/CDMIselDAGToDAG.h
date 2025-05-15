@@ -5,8 +5,6 @@
 #ifndef LLVM_CDMISELDAGTODAG_H
 #define LLVM_CDMISELDAGTODAG_H
 
-#include "CDM.h"
-#include "CDMSubtarget.h"
 #include "CDMTargetMachine.h"
 
 #include "llvm/CodeGen/SelectionDAGISel.h"

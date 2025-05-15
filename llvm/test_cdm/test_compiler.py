@@ -101,7 +101,7 @@ def test_compiler():
                 "-jar",
                 resources / "logisim-runner-all.jar",
                 bin_res,
-                resources / "test_circuit.circ",
+                resources / "test_circuit_emu.circ",
                 mem_res,
                 resources / "config.properties",
                 "10000",

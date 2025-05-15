@@ -10,14 +10,14 @@
 #include "llvm/CodeGen/MachineOperand.h"
 
 namespace llvm {
-CDMMCInstLower::CDMMCInstLower(CDMAsmPrinter &asmPrinter)
-    : AsmPrinter(asmPrinter) {}
+CDMMCInstLower::CDMMCInstLower(CDMAsmPrinter &AsmPrinter)
+    : AsmPrinter(AsmPrinter) {}
 void CDMMCInstLower::Initialize(MCContext *C) { Ctx = C; }
 void CDMMCInstLower::Lower(const MachineInstr *MI, MCInst &OutMI) const {
   OutMI.setOpcode(MI->getOpcode());
 
-  for (unsigned i = 0, e = MI->getNumOperands(); i != e; i++) {
-    const MachineOperand &MO = MI->getOperand(i);
+  for (unsigned I = 0, E = MI->getNumOperands(); I != E; I++) {
+    const MachineOperand &MO = MI->getOperand(I);
     MCOperand MCOp = LowerOperand(MO);
 
     if (MCOp.isValid()) {
@@ -26,7 +26,7 @@ void CDMMCInstLower::Lower(const MachineInstr *MI, MCInst &OutMI) const {
   }
 }
 MCOperand CDMMCInstLower::LowerOperand(const MachineOperand &MO,
-                                       int offset) const {
+                                       int Offset) const {
   auto MOType = MO.getType();
   switch (MOType) {
   default:
@@ -41,7 +41,7 @@ MCOperand CDMMCInstLower::LowerOperand(const MachineOperand &MO,
   case MachineOperand::MO_GlobalAddress:
   case MachineOperand::MO_ExternalSymbol:
   case MachineOperand::MO_JumpTableIndex:
-    return LowerSymbolOperand(MO, offset);
+    return LowerSymbolOperand(MO, Offset);
   }
   return MCOperand();
 }

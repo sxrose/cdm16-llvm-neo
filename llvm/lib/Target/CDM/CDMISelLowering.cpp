@@ -424,8 +424,6 @@ CDMISelLowering::EmitInstrWithCustomInserter(MachineInstr &MI,
   DebugLoc DL = MI.getDebugLoc();
 
   auto Dst = MI.getOperand(0);
-  auto Lhs = MI.getOperand(1);
-  auto Rhs = MI.getOperand(2);
   auto TrueVal = MI.getOperand(3);
   auto FalseVal = MI.getOperand(4);
   auto CondCode = static_cast<ISD::CondCode>(MI.getOperand(5).getImm());
@@ -449,11 +447,6 @@ CDMISelLowering::EmitInstrWithCustomInserter(MachineInstr &MI,
   HeadMBB->addSuccessor(IfFalseMBB);
   HeadMBB->addSuccessor(TailMBB);
   IfFalseMBB->addSuccessor(TailMBB);
-
-  MachineInstr *CMPInst = BuildMI(HeadMBB, DL, TII.get(CDM::CMP))
-                              .addReg(Lhs.getReg())
-                              .addReg(Rhs.getReg())
-                              .getInstr();
 
   // TODO: check if glue needed
 

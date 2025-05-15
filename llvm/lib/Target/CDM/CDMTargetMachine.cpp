@@ -1,9 +1,8 @@
 #include "CDMTargetMachine.h"
-#include "CDM.h"
+#include "CDMFunctionInfo.h"
 #include "CDMIselDAGToDAG.h"
 #include "CDMTargetObjectFile.h"
 #include "TargetInfo/CDMTargetInfo.h"
-#include "llvm/CodeGen/Passes.h"
 #include "llvm/CodeGen/TargetPassConfig.h"
 #include "llvm/MC/TargetRegistry.h"
 #include <optional>
@@ -32,7 +31,7 @@ CDMTargetMachine::CDMTargetMachine(const Target &T, const Triple &TT,
     : LLVMTargetMachine(T, computeDataLayout(), TT, CPU, FS, Options,
                         Reloc::Static, CodeModel::Small, OL),
       TLOF(std::make_unique<CDMTargetObjectFile>()),
-      dataLayout(computeDataLayout()), DefaultSubtarget(TT, CPU, FS, *this) {
+      DataLayout(computeDataLayout()), DefaultSubtarget(TT, CPU, FS, *this) {
   initAsmInfo();
   //  Options.EmitAddrsig = false;
 }

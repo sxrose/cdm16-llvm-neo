@@ -28,8 +28,8 @@ public:
   void emitLinkage(const GlobalValue *GV, MCSymbol *GVSym) const override;
   //  void emitStartOfAsmFile(Module &module) override;
   void emitFunctionHeader() override;
-  void emitStartOfAsmFile(Module &module) override;
-  void emitEndOfAsmFile(Module &module) override;
+  void emitStartOfAsmFile(Module &Module) override;
+  void emitEndOfAsmFile(Module &Module) override;
 };
 
 class CDMAsmTargetStreamer : public MCTargetStreamer {

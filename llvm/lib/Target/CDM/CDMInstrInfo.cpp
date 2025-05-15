@@ -4,10 +4,9 @@
 
 #include "CDMInstrInfo.h"
 
-#include "llvm/ADT/STLExtras.h"
+#include "CDM.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
-#include "llvm/Support/ErrorHandling.h"
 // #include "llvm/Support/TargetRegistry.h"
 
 #define GET_INSTRINFO_CTOR_DTOR
@@ -20,7 +19,7 @@ CDMInstrInfo::CDMInstrInfo()
 // needed for loading/saving regs in prologue/epilogue
 void CDMInstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
                                        MachineBasicBlock::iterator I,
-                                       Register SrcReg, bool isKill, int FI,
+                                       Register SrcReg, bool IsKill, int FI,
                                        const TargetRegisterClass *RC,
                                        const TargetRegisterInfo *TRI,
                                        Register VReg) const {
@@ -29,7 +28,7 @@ void CDMInstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
 
   // TODO: understand this
   BuildMI(MBB, I, DL, get(CDM::ssw))
-      .addReg(SrcReg, getKillRegState(isKill))
+      .addReg(SrcReg, getKillRegState(IsKill))
       .addFrameIndex(FI)
       .addMemOperand(MMO);
 }
