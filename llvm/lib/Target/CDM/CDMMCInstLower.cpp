@@ -12,20 +12,20 @@
 namespace llvm {
 CDMMCInstLower::CDMMCInstLower(CDMAsmPrinter &AsmPrinter)
     : AsmPrinter(AsmPrinter) {}
-void CDMMCInstLower::Initialize(MCContext *C) { Ctx = C; }
-void CDMMCInstLower::Lower(const MachineInstr *MI, MCInst &OutMI) const {
+void CDMMCInstLower::initialize(MCContext *C) { Ctx = C; }
+void CDMMCInstLower::lower(const MachineInstr *MI, MCInst &OutMI) const {
   OutMI.setOpcode(MI->getOpcode());
 
   for (unsigned I = 0, E = MI->getNumOperands(); I != E; I++) {
     const MachineOperand &MO = MI->getOperand(I);
-    MCOperand MCOp = LowerOperand(MO);
+    MCOperand MCOp = lowerOperand(MO);
 
     if (MCOp.isValid()) {
       OutMI.addOperand(MCOp);
     }
   }
 }
-MCOperand CDMMCInstLower::LowerOperand(const MachineOperand &MO,
+MCOperand CDMMCInstLower::lowerOperand(const MachineOperand &MO,
                                        int Offset) const {
   auto MOType = MO.getType();
   switch (MOType) {
@@ -41,11 +41,11 @@ MCOperand CDMMCInstLower::LowerOperand(const MachineOperand &MO,
   case MachineOperand::MO_GlobalAddress:
   case MachineOperand::MO_ExternalSymbol:
   case MachineOperand::MO_JumpTableIndex:
-    return LowerSymbolOperand(MO, Offset);
+    return lowerSymbolOperand(MO, Offset);
   }
   return MCOperand();
 }
-MCOperand CDMMCInstLower::LowerSymbolOperand(const MachineOperand &MO,
+MCOperand CDMMCInstLower::lowerSymbolOperand(const MachineOperand &MO,
                                              int Offset) const {
   MCSymbolRefExpr::VariantKind Kind = MCSymbolRefExpr::VK_None;
   const MCSymbol *Symbol;

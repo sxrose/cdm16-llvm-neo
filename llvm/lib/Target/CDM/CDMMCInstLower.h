@@ -16,11 +16,11 @@ class CDMMCInstLower {
   CDMAsmPrinter &AsmPrinter;
 
 public:
-  CDMMCInstLower(CDMAsmPrinter &asmPrinter);
-  void Initialize(MCContext *C);
-  void Lower(const MachineInstr *MI, MCInst &OutMI) const;
-  MCOperand LowerOperand(const MachineOperand &MO, int offset = 0) const;
-  MCOperand LowerSymbolOperand(const MachineOperand &MO, int offset = 0) const;
+  CDMMCInstLower(CDMAsmPrinter &AsmPrinter);
+  void initialize(MCContext *C);
+  void lower(const MachineInstr *MI, MCInst &OutMI) const;
+  MCOperand lowerOperand(const MachineOperand &MO, int Offset = 0) const;
+  MCOperand lowerSymbolOperand(const MachineOperand &MO, int Offset = 0) const;
 };
 
 } // namespace llvm
