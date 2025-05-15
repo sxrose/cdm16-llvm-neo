@@ -8,9 +8,7 @@
 #include "llvm/MC/MCRegisterInfo.h"
 #include "llvm/MC/MCSubtargetInfo.h"
 #include "llvm/MC/MCSymbol.h"
-#include "llvm/MC/MachineLocation.h"
 #include "llvm/MC/TargetRegistry.h"
-#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/FormattedStream.h"
@@ -30,7 +28,7 @@
 
 namespace llvm {
 Target &getTheCDMTarget();
-}
+} // namespace llvm
 using namespace llvm;
 
 static MCAsmInfo *createCDMMCAsmInfo(const MCRegisterInfo &MRI,
@@ -77,7 +75,7 @@ static MCInstPrinter *createCDMMCInstPrinter(const Triple &T,
 static MCTargetStreamer *createCDMTargetAsmStreamer(MCStreamer &S,
                                                     formatted_raw_ostream &OS,
                                                     MCInstPrinter *InstPrint,
-                                                    bool isVerboseAsm) {
+                                                    bool IsVerboseAsm) {
   return new CDMAsmTargetStreamer(S);
 }
 

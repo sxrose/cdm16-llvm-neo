@@ -123,7 +123,6 @@ SDValue CDMISelLowering::LowerFormalArguments(
   auto LastFI = MFI.CreateFixedObject(2, VaArgStartSPOffset, true);
   CDMFI->setVarArgsFrameIndex(LastFI);
 
-  CDMFI->setLastInArgFI(LastFI);
   if (!OutChains.empty()) {
     OutChains.push_back(Chain);
     Chain = DAG.getNode(ISD::TokenFactor, DL, MVT::Other, OutChains);
