@@ -2,6 +2,8 @@ from enum import IntEnum
 import json
 from pathlib import Path
 import subprocess
+import traceback
+from concurrent.futures import ThreadPoolExecutor
 
 
 class ReturnCode(IntEnum):
@@ -33,22 +35,10 @@ def assert_nested_subset(expected, actual, path=""):
         ), f"Mismatch at {path}: expected {expected}, got {actual}"
 
 
-def test_compiler():
-    test_dir = Path(__file__).parent.absolute()
-    output_dir = test_dir / "output"
-    src_dir = test_dir / "src"
-    build_dir = test_dir / "build"
-    gen_dir = build_dir / "gen"
-    bin_dir = (test_dir / ".." / "build" / "bin").absolute()
-    resources = build_dir / "resources"
-    ivt = test_dir / "ivt.asm"
-
-    build_dir.mkdir(parents=True, exist_ok=True)
-    gen_dir.mkdir(parents=True, exist_ok=True)
-
-    for expected in filter(Path.is_file, output_dir.iterdir()):
-        src_file = src_dir / f"{expected.stem}.c"
-        assert src_file.exists()
+def run_test(expected, src_dir, gen_dir, bin_dir, build_dir, resources, ivt):
+    src_file = src_dir / f"{expected.stem}.c"
+    try:
+        assert src_file.exists(), f"Source file not found: {src_file}"
 
         asm_res = gen_dir / f"{expected.stem}.asm"
         asm_gen_process = subprocess.run(
@@ -67,7 +57,11 @@ def test_compiler():
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
         )
-        assert asm_gen_process.returncode == ReturnCode.SUCCESS
+        assert asm_gen_process.returncode == ReturnCode.SUCCESS, (
+            f"ASM generation failed for {src_file} with return code {asm_gen_process.returncode}.\n"
+            f"Stdout: {asm_gen_process.stdout.decode()}\n"
+            f"Stderr: {asm_gen_process.stderr.decode()}"
+        )
 
         bin_res = gen_dir / f"{expected.stem}.img"
         bin_gen_process = subprocess.run(
@@ -92,7 +86,11 @@ def test_compiler():
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
         )
-        assert bin_gen_process.returncode == ReturnCode.SUCCESS
+        assert bin_gen_process.returncode == ReturnCode.SUCCESS, (
+            f"Binary generation failed for {src_file} with return code {bin_gen_process.returncode}.\n"
+            f"Stdout: {bin_gen_process.stdout.decode()}\n"
+            f"Stderr: {bin_gen_process.stderr.decode()}"
+        )
 
         mem_res = gen_dir / f"mem_{expected.stem}.img"
         run_process = subprocess.run(
@@ -111,9 +109,43 @@ def test_compiler():
             stderr=subprocess.PIPE,
         )
 
-        assert run_process.returncode == ReturnCode.SUCCESS
+        assert run_process.returncode == ReturnCode.SUCCESS, (
+            f"Simulation failed for {src_file} with return code {run_process.returncode}.\n"
+            f"Stdout: {run_process.stdout.decode()}\n"
+            f"Stderr: {run_process.stderr.decode()}"
+        )
+
         output = json.loads(run_process.stdout)
         output["memory"] = json.loads(Path(mem_res).read_text("UTF-8"))
         data_expected = json.loads(Path(expected).read_text("UTF-8"))
 
         assert_nested_subset(data_expected, output)
+    except AssertionError as e:
+        print(f"Error in file: {expected}")
+        print(traceback.format_exc())
+        raise e
+
+
+def test_compiler():
+    test_dir = Path(__file__).parent.absolute()
+    output_dir = test_dir / "output"
+    src_dir = test_dir / "src"
+    build_dir = test_dir / "build"
+    gen_dir = build_dir / "gen"
+    bin_dir = (test_dir / ".." / "build" / "bin").absolute()
+    resources = build_dir / "resources"
+    ivt = test_dir / "ivt.asm"
+
+    build_dir.mkdir(parents=True, exist_ok=True)
+    gen_dir.mkdir(parents=True, exist_ok=True)
+
+    with ThreadPoolExecutor() as executor:
+        futures = [
+            executor.submit(
+                run_test, expected, src_dir, gen_dir, bin_dir, build_dir, resources, ivt
+            )
+            for expected in filter(Path.is_file, output_dir.iterdir())
+        ]
+
+        for future in futures:
+            future.result()
