@@ -161,13 +161,13 @@ CDMISelLowering::LowerReturn(SDValue Chain, CallingConv::ID CallConv,
   SmallVector<SDValue, 4> RetOps(1, Chain);
 
   // Copy the result values into the output registers.
-  for (unsigned i = 0; i != RVLocs.size(); ++i) {
-    SDValue Val = OutVals[i];
-    CCValAssign &VA = RVLocs[i];
+  for (unsigned I = 0; I != RVLocs.size(); ++I) {
+    SDValue Val = OutVals[I];
+    CCValAssign &VA = RVLocs[I];
     assert(VA.isRegLoc() && "Can only return in registers!");
 
-    if (RVLocs[i].getValVT() != RVLocs[i].getLocVT())
-      Val = DAG.getNode(ISD::BITCAST, DL, RVLocs[i].getLocVT(), Val);
+    if (RVLocs[I].getValVT() != RVLocs[I].getLocVT())
+      Val = DAG.getNode(ISD::BITCAST, DL, RVLocs[I].getLocVT(), Val);
 
     Chain = DAG.getCopyToReg(Chain, DL, VA.getLocReg(), Val, Flag);
 

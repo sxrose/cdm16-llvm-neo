@@ -5,8 +5,6 @@
 #ifndef LLVM_CDMISELLOWERING_H
 #define LLVM_CDMISELLOWERING_H
 
-#include "CDM.h"
-
 #include "llvm/CodeGen/CallingConvLower.h"
 #include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/CodeGen/SelectionDAGNodes.h"
