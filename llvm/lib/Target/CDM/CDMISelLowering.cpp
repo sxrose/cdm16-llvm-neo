@@ -13,8 +13,10 @@
 #include "llvm/CodeGen/MachineMemOperand.h"
 #include "llvm/CodeGen/Register.h"
 #include "llvm/CodeGen/SelectionDAGNodes.h"
+#include "llvm/CodeGen/TargetCallingConv.h"
 #include "llvm/CodeGen/TargetLowering.h"
 #include "llvm/CodeGenTypes/MachineValueType.h"
+#include "llvm/IR/DataLayout.h"
 #include <vector>
 
 using namespace llvm;
@@ -257,6 +259,37 @@ SDValue CDMISelLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
   // Analyze operands of the call, assigning locations to each operand.
   CCInfo.AnalyzeCallOperands(Outs, CC_CDM);
 
+  MachineFrameInfo &MFI = MF.getFrameInfo();
+
+  // Create local copies for byval args.
+  SmallVector<SDValue, 8> ByValArgs;
+  for (unsigned I = 0,  E = Outs.size(); I != E; ++I) {
+    ISD::ArgFlagsTy Flags = Outs[I].Flags;
+    if (!Flags.isByVal())
+      continue;
+
+    SDValue Arg = OutVals[I];
+    unsigned Size = Flags.getByValSize();
+    Align Alignment = Flags.getNonZeroByValAlign();
+
+    if (Size > 0U) {
+      int FI = MFI.CreateStackObject(Size, Alignment, false);
+      SDValue FIPtr = DAG.getFrameIndex(FI, getPointerTy(DAG.getDataLayout()));
+      SDValue SizeNode = DAG.getConstant(Size, Loc, MVT::i16);
+
+      Chain = DAG.getMemcpy(Chain, Loc, FIPtr, Arg, SizeNode, Alignment,
+                            false,        // isVolatile,
+                            (Size <= 16), // AlwaysInline if size <= 16,
+                            false,        // isTailCall
+                            MachinePointerInfo(), MachinePointerInfo());
+      ByValArgs.push_back(FIPtr);
+    }
+    else {
+      SDValue NullVal;
+      ByValArgs.push_back(NullVal);
+    }
+  }
+
   // Get the size of the outgoing arguments stack space requirement.
   unsigned NextStackOffset = CCInfo.getStackSize() + StackReserved;
   unsigned StackAlignment = TFL->getStackAlignment();
@@ -271,9 +304,17 @@ SDValue CDMISelLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
   SDValue StackPtr = DAG.getCopyFromReg(Chain, Loc, CDM::SP, PtrVT);
 
   // Walk the register/memloc assignments, inserting copies/loads.
-  for (unsigned I = 0, E = ArgLocs.size(); I != E; ++I) {
+  for (unsigned I = 0, RealArgIdx = 0, ByValArgIdx = 0, E = ArgLocs.size(); I != E; ++I, ++RealArgIdx) {
     CCValAssign &VA = ArgLocs[I];
-    SDValue Arg = OutVals[I];
+    SDValue Arg = OutVals[RealArgIdx];
+
+    ISD::ArgFlagsTy Flags = Outs[RealArgIdx].Flags;
+    if (Flags.isByVal()) {
+      Arg = ByValArgs[ByValArgIdx++];
+      if (!Arg) {
+        continue;
+      }
+    }
 
     // We only handle fully promoted arguments.
     assert(VA.getLocInfo() == CCValAssign::Full && "Unhandled loc info");
