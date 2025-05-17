@@ -16,8 +16,8 @@ out_bin/%.bin: out_asm/%.asm start.asm
 run_%: out_bin/%.bin
 	java -jar $(EMU) $+ emu_out/$@.json 1000000000
 
-test: prepare_tests
-	pytest
+test:
+	pytest -n auto
 
 build/cdm-devkit:
 	cd build && git clone git@github.com:cdm-processors/cdm-devkit.git -b 0.2.2

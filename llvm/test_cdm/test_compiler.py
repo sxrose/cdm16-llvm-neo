@@ -1,9 +1,9 @@
 from enum import IntEnum
 import json
+import os
 from pathlib import Path
 import subprocess
-import traceback
-from concurrent.futures import ThreadPoolExecutor
+import pytest
 
 
 class ReturnCode(IntEnum):
@@ -35,12 +35,14 @@ def assert_nested_subset(expected, actual, path=""):
         ), f"Mismatch at {path}: expected {expected}, got {actual}"
 
 
-def run_test(expected, src_dir, gen_dir, bin_dir, build_dir, resources, ivt):
+def run_test(
+    expected, optimisation_level, src_dir, gen_dir, bin_dir, build_dir, resources, ivt
+):
     src_file = src_dir / f"{expected.stem}.c"
     try:
         assert src_file.exists(), f"Source file not found: {src_file}"
 
-        asm_res = gen_dir / f"{expected.stem}.asm"
+        asm_res = gen_dir / f"{expected.stem}_O{optimisation_level}.asm"
         asm_gen_process = subprocess.run(
             [
                 "./clang",
@@ -48,7 +50,7 @@ def run_test(expected, src_dir, gen_dir, bin_dir, build_dir, resources, ivt):
                 "-target",
                 "cdm",
                 "-S",
-                "-O1",
+                f"-O{optimisation_level}",
                 str(src_file),
                 "-o",
                 str(asm_res),
@@ -63,7 +65,7 @@ def run_test(expected, src_dir, gen_dir, bin_dir, build_dir, resources, ivt):
             f"Stderr: {asm_gen_process.stderr.decode()}"
         )
 
-        bin_res = gen_dir / f"{expected.stem}.img"
+        bin_res = gen_dir / f"{expected.stem}_O{optimisation_level}.img"
         bin_gen_process = subprocess.run(
             [
                 "docker",
@@ -78,9 +80,9 @@ def run_test(expected, src_dir, gen_dir, bin_dir, build_dir, resources, ivt):
                 "-t",
                 "cdm16",
                 "-o",
-                f"/root/gen/{expected.stem}.img",
+                f"/root/gen/{bin_res.name}",
                 "/root/ivt.img",
-                f"/root/gen/{expected.stem}.asm",
+                f"/root/gen/{asm_res.name}",
             ],
             cwd=str(bin_dir),
             stdout=subprocess.PIPE,
@@ -92,17 +94,31 @@ def run_test(expected, src_dir, gen_dir, bin_dir, build_dir, resources, ivt):
             f"Stderr: {bin_gen_process.stderr.decode()}"
         )
 
-        mem_res = gen_dir / f"mem_{expected.stem}.img"
+        mem_res = gen_dir / f"{expected.stem}_O{optimisation_level}_mem.img"
         run_process = subprocess.run(
             [
+                "docker",
+                "run",
+                "--rm",
+                "-v",
+                f"{build_dir}:/root",
+                "--workdir",
+                f"/root/{os.path.relpath(resources, build_dir)}",
+                  "cdm-devkit",
                 "java",
                 "-jar",
-                resources / "logisim-runner-all.jar",
-                bin_res,
-                resources / "test_circuit_emu.circ",
-                mem_res,
-                resources / "config.properties",
+                "logisim-runner-all.jar",
+                f"/root/{os.path.relpath(bin_res, build_dir)}",
+                "test_circuit.circ",
+                f"/root/{os.path.relpath(mem_res, build_dir)}",
+                "config.properties",
                 "10000",
+                # "java",
+                # "-jar",
+                # resources / "logisim-runner-all.jar",
+                # bin_res "test_circuit.circ",
+                # f"/root/{os.path.relpath(mem_res, build_dir)}" "config.properties",
+                # "10000",
             ],
             cwd=resources,
             stdout=subprocess.PIPE,
@@ -121,12 +137,13 @@ def run_test(expected, src_dir, gen_dir, bin_dir, build_dir, resources, ivt):
 
         assert_nested_subset(data_expected, output)
     except AssertionError as e:
-        print(f"Error in file: {expected}")
-        print(traceback.format_exc())
-        raise e
+        e.add_note(
+            f"error at test {expected.stem} with optimization O{optimisation_level}"
+        )
+        raise
 
 
-def test_compiler():
+def get_test_cases():
     test_dir = Path(__file__).parent.absolute()
     output_dir = test_dir / "output"
     src_dir = test_dir / "src"
@@ -136,16 +153,44 @@ def test_compiler():
     resources = build_dir / "resources"
     ivt = test_dir / "ivt.asm"
 
-    build_dir.mkdir(parents=True, exist_ok=True)
-    gen_dir.mkdir(parents=True, exist_ok=True)
-
-    with ThreadPoolExecutor() as executor:
-        futures = [
-            executor.submit(
-                run_test, expected, src_dir, gen_dir, bin_dir, build_dir, resources, ivt
+    cases = []
+    for expected in filter(Path.is_file, output_dir.iterdir()):
+        for optimization_level in ["0", "1", "2", "3", "s"]:
+            cases.append(
+                (
+                    expected,
+                    optimization_level,
+                    src_dir,
+                    gen_dir,
+                    bin_dir,
+                    build_dir,
+                    resources,
+                    ivt,
+                )
             )
-            for expected in filter(Path.is_file, output_dir.iterdir())
-        ]
+    return cases
 
-        for future in futures:
-            future.result()
+
+@pytest.mark.parametrize(
+    "expected, optimisation_level, src_dir, gen_dir, bin_dir, build_dir, resources, ivt",
+    get_test_cases(),
+)
+def test_compiler(
+    expected, optimisation_level, src_dir, gen_dir, bin_dir, build_dir, resources, ivt
+):
+    run_test(
+        expected,
+        optimisation_level,
+        src_dir,
+        gen_dir,
+        bin_dir,
+        build_dir,
+        resources,
+        ivt,
+    )
+
+
+if __name__ == "__main__":
+    import sys
+
+    sys.exit(pytest.main([__file__]))
