@@ -233,8 +233,6 @@ const char *CDMISelLowering::getTargetNodeName(unsigned int Opcode) const {
   }
 }
 
-// Mostly taken from llvm-leg
-// TODO: use code from cpu0, not leg
 SDValue CDMISelLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
                                    SmallVectorImpl<SDValue> &InVals) const {
   SelectionDAG &DAG = CLI.DAG;

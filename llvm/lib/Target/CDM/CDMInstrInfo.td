@@ -181,8 +181,6 @@ let Uses = [FP] in {
 }
 def : Pat<(i16(extloadi8 addr_on_frame:$src)), (lsb addr_on_frame:$src)>;
 
-// def stw: StoreM<"stw", store, mem, addr, 0>;
-
 // TODO: use TABLES?
 class LoadM<string instr_asm, PatFrag OpNode, Operand MemOperand,
             ComplexPattern AddrPattern, bit Pseudo>

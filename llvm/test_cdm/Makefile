@@ -16,26 +16,51 @@ out_bin/%.bin: out_asm/%.asm start.asm
 run_%: out_bin/%.bin
 	java -jar $(EMU) $+ emu_out/$@.json 1000000000
 
-test:
+BUILD_DIR=build
+RESOURCES_DIR=$(BUILD_DIR)/resources
+MODIFIED_RESOURCES=$(addprefix 	\
+	$(RESOURCES_DIR)/, 						\
+		config.properties 					\
+		test_circuit.circ 					\
+		test_circuit_emu.circ				\
+)
+UNCHANGED_RESOURCES=$(addprefix \
+	$(RESOURCES_DIR)/, 						\
+		cdm16.circ                  \
+		logisim-banked-memory.jar   \
+		logisim-cdm-emulator.jar    \
+		logisim-runner-all.jar      \
+)
+RESOURCES=$(UNCHANGED_RESOURCES) $(MODIFIED_RESOURCES)
+
+test: $(RESOURCES)
+	mkdir -p $(BUILD_DIR)/gen
 	pytest -n auto
 
-build/cdm-devkit:
-	cd build && git clone git@github.com:cdm-processors/cdm-devkit.git -b 0.2.2
+$(BUILD_DIR)/cdm-devkit:
+	cd $(BUILD_DIR) && git clone git@github.com:cdm-processors/cdm-devkit.git -b logisim-runner-vn-support
 
-prepare_tests: build/cdm-devkit
-	mkdir -p build
-	docker build -t cdm-devkit --file config/cdm-devkit.Dockerfile .
-	docker run --rm -v ${PWD}/build:/root cdm-devkit make prepare_tests
-	mkdir -p build/resources
-	cp build/cdm-devkit/tests/jar/logisim-runner-all.jar build/resources/
-	cp build/cdm-devkit/tests/resources/cdm16/circuits/* build/resources/
+$(BUILD_DIR)/docker-dummy: config/cdm-devkit.Dockerfile
+	docker build -t cdm-devkit --file $< .
+	mkdir -p $(@D)
+	touch $@
 
-#clean:
-#	rm -rv out_asm/*
-#	rm -rv out_bin/*
-#
-#.PHONY: clean
-#
+build-docker: $(BUILD_DIR)/docker-dummy
+
+$(UNCHANGED_RESOURCES): $(BUILD_DIR)/docker-dummy $(BUILD_DIR)/cdm-devkit
+	docker run --rm -v ${PWD}/$(BUILD_DIR):/root cdm-devkit make prepare_tests
+	mkdir -p $(BUILD_DIR)/resources
+	cp $(BUILD_DIR)/cdm-devkit/tests/jar/logisim-runner-all.jar $(RESOURCES_DIR)
+	cp $(BUILD_DIR)/cdm-devkit/tests/resources/cdm16/circuits/* $(RESOURCES_DIR)
+
+$(MODIFIED_RESOURCES): $(RESOURCES_DIR)/%: config/%
+	mkdir -p $(@D)
+	cp $< $@
+
+prepare_tests: $(RESOURCES)
+
+clean:
+	rm -rf build/*
 
 .PHONY: run_%
 .SECONDARY:
