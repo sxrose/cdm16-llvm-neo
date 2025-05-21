@@ -6,6 +6,7 @@
 #include "CDMRegisterInfo.h"
 #include "CDMSubtarget.h"
 #include "CDMTargetMachine.h"
+#include "MCTargetDesc/CDMMCTargetDesc.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/CodeGen/ISDOpcodes.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
@@ -17,6 +18,7 @@
 #include "llvm/CodeGen/TargetLowering.h"
 #include "llvm/CodeGenTypes/MachineValueType.h"
 #include "llvm/IR/DataLayout.h"
+#include "llvm/Support/ErrorHandling.h"
 #include <vector>
 
 using namespace llvm;
@@ -100,6 +102,17 @@ SDValue CDMISelLowering::LowerFormalArguments(
                                  MachinePointerInfo::getFixedStack(MF, FI)));
   }
 
+  if (MF.getFunction().hasStructRetAttr()) {
+    CDMFunctionInfo *CFI = MF.getInfo<CDMFunctionInfo>();
+    Register Reg = CFI->getSRetReturnReg();
+    if (!Reg) {
+      Reg = MF.getRegInfo().createVirtualRegister(&CDM::CPURegsRegClass);
+      CFI->setSRetReturnReg(Reg);
+    }
+    SDValue Copy = DAG.getCopyToReg(DAG.getEntryNode(), DL, Reg, InVals[0]);
+    Chain = DAG.getNode(ISD::TokenFactor, DL, MVT::Other, Copy, Chain);
+  }
+
   if (!IsVarArg)
     return Chain;
 
@@ -177,28 +190,16 @@ CDMISelLowering::LowerReturn(SDValue Chain, CallingConv::ID CallConv,
     RetOps.push_back(DAG.getRegister(VA.getLocReg(), VA.getLocVT()));
   }
 
-  //@Ordinary struct type: 2 {
-  // The cpu0 ABIs for returning structs by value requires that we copy
-  // the sret argument into $v0 for the return. We saved the argument into
-  // a virtual register in the entry block, so now we copy the value out
-  // and into $v0.
   if (MF.getFunction().hasStructRetAttr()) {
-    llvm_unreachable("No support for SRet yet, sorry");
-    //    Cpu0FunctionInfo *Cpu0FI = MF.getInfo<Cpu0FunctionInfo>();
-    //    unsigned Reg = Cpu0FI->getSRetReturnReg();
-    //
-    //    if (!Reg)
-    //      llvm_unreachable("sret virtual register not created in the entry
-    //      block");
-    //    SDValue Val =
-    //        DAG.getCopyFromReg(Chain, DL, Reg,
-    //        getPointerTy(DAG.getDataLayout()));
-    //    unsigned V0 = Cpu0::V0;
-    //
-    //    Chain = DAG.getCopyToReg(Chain, DL, V0, Val, Flag);
-    //    Flag = Chain.getValue(1);
-    //    RetOps.push_back(DAG.getRegister(V0,
-    //    getPointerTy(DAG.getDataLayout())));
+    CDMFunctionInfo *CFI = MF.getInfo<CDMFunctionInfo>();
+    Register Reg = CFI->getSRetReturnReg();
+    if (!Reg) {
+      llvm_unreachable("sret virtual register not created in the entry block");
+    }
+    auto PtrVT = getPointerTy(DAG.getDataLayout());
+    SDValue Val = DAG.getCopyFromReg(Chain, DL, Reg, PtrVT);
+    Chain = DAG.getCopyToReg(Chain, DL, CDM::R0, Val);
+    RetOps.push_back(DAG.getRegister(CDM::R0, PtrVT));
   }
   //@Ordinary struct type: 2 }
 
