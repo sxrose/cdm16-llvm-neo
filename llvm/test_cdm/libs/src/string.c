@@ -8,3 +8,12 @@ void *memcpy(void *dest, const void *src, size_t count)
 		*tmp++ = *s++;
 	return dest;
 }
+
+size_t strlen(const char *s)
+{
+	const char *sc;
+
+	for (sc = s; *sc != '\0'; ++sc)
+		/* nothing */;
+	return sc - s;
+}
