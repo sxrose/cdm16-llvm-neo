@@ -33,7 +33,11 @@ UNCHANGED_RESOURCES=$(addprefix \
 )
 RESOURCES=$(UNCHANGED_RESOURCES) $(MODIFIED_RESOURCES)
 
-test: $(RESOURCES)
+LIBS=$(addprefix $(BUILD_DIR)/libs/,	\
+	string.asm													\
+)
+
+test: $(RESOURCES) $(LIBS)
 	mkdir -p $(BUILD_DIR)/gen
 	pytest -n auto
 
@@ -63,7 +67,7 @@ $(MODIFIED_RESOURCES): $(RESOURCES_DIR)/%: config/%
 
 prepare_tests: $(RESOURCES)
 
-$(BUILD_DIR)/libs/%.asm: libs/src/%.c
+$(LIBS): $(BUILD_DIR)/libs/%.asm: libs/src/%.c
 	@mkdir -p $(@D)
 	../build/bin/clang -target cdm -S -O3 -I libs/inc $< -o $@
 

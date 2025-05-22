@@ -92,6 +92,8 @@ void CDMAsmPrinter::emitFunctionHeader() {
 }
 
 void CDMAsmPrinter::emitStartOfAsmFile(Module &Module) {
+  OutStreamer->emitRawText("memset, memcpy: ext\n");
+
   auto FN = Module.getSourceFileName();
 
   std::replace_if(
@@ -110,8 +112,6 @@ void CDMAsmPrinter::emitStartOfAsmFile(Module &Module) {
       OutStreamer->emitRawText(llvm::formatv("{0}: ext\n", GV.getName()));
     }
   }
-
-  OutStreamer->emitRawText("memset: ext\nmemcpy: ext\n");
 
   // for (auto &ExternalSymbolName : ExternalSymbolNames) {
   //   OutStreamer->emitRawText(formatv("{0}: ext\n", ExternalSymbolName));
