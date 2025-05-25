@@ -27,7 +27,7 @@ public:
     HalfAlign = 16;
     FloatWidth = 32;
     FloatAlign = 16;
-    DoubleWidth = 32;
+    DoubleWidth = 64;
     DoubleAlign = 16;
     DoubleFormat = &llvm::APFloat::IEEEsingle();
     LongDoubleWidth = 128;
