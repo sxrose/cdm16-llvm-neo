@@ -43,7 +43,8 @@ test: $(RESOURCES) $(LIBS)
 	pytest -n auto
 
 $(BUILD_DIR)/cdm-devkit:
-	cd $(BUILD_DIR) && git clone git@github.com:cdm-processors/cdm-devkit.git -b logisim-runner-vn-support
+	cd $(BUILD_DIR) && git clone git@github.com:cdm-processors/cdm-devkit.git
+	cd $(BUILD_DIR)/cdm-devkit && git checkout 4fa59ba # To ensure in stable work
 
 $(BUILD_DIR)/docker-dummy: config/cdm-devkit.Dockerfile
 	docker build -t cdm-devkit --file $< .
