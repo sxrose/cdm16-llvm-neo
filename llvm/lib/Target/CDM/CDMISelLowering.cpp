@@ -262,7 +262,7 @@ SDValue CDMISelLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
 
   // Create local copies for byval args.
   SmallVector<SDValue, 8> ByValArgs;
-  for (unsigned I = 0,  E = Outs.size(); I != E; ++I) {
+  for (unsigned I = 0, E = Outs.size(); I != E; ++I) {
     ISD::ArgFlagsTy Flags = Outs[I].Flags;
     if (!Flags.isByVal())
       continue;
@@ -282,8 +282,7 @@ SDValue CDMISelLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
                             false,        // isTailCall
                             MachinePointerInfo(), MachinePointerInfo());
       ByValArgs.push_back(FIPtr);
-    }
-    else {
+    } else {
       SDValue NullVal;
       ByValArgs.push_back(NullVal);
     }
@@ -303,7 +302,8 @@ SDValue CDMISelLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
   SDValue StackPtr = DAG.getCopyFromReg(Chain, Loc, CDM::SP, PtrVT);
 
   // Walk the register/memloc assignments, inserting copies/loads.
-  for (unsigned I = 0, RealArgIdx = 0, ByValArgIdx = 0, E = ArgLocs.size(); I != E; ++I, ++RealArgIdx) {
+  for (unsigned I = 0, RealArgIdx = 0, ByValArgIdx = 0, E = ArgLocs.size();
+       I != E; ++I, ++RealArgIdx) {
     CCValAssign &VA = ArgLocs[I];
     SDValue Arg = OutVals[RealArgIdx];
 

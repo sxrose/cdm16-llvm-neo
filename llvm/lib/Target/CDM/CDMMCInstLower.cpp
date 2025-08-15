@@ -49,7 +49,8 @@ MCOperand CDMMCInstLower::lowerOperand(const MachineOperand &MO,
 }
 MCOperand CDMMCInstLower::lowerSymbolOperand(const MachineOperand &MO,
                                              int Offset) const {
-  MCSymbolRefExpr::VariantKind Kind = (MCSymbolRefExpr::VariantKind)MO.getTargetFlags();
+  MCSymbolRefExpr::VariantKind Kind =
+      (MCSymbolRefExpr::VariantKind)MO.getTargetFlags();
   const MCSymbol *Symbol = nullptr;
 
   switch (MO.getType()) {
