@@ -81,10 +81,15 @@ void CDMAsmPrinter::collectAndEmitSourceFiles(Module &module) {
 }
 
 void CDMAsmPrinter::emitInstruction(const MachineInstr *Instr) {
+  static unsigned previousLineNumber = 0;
+  static int previousFileIndex = -1;
+
   if (Instr->isDebugValue()) {
     // TODO: implement
     return;
   }
+  if (Instr->isDebugLabel())
+    return;
 
   DILocation *debugLoc = Instr->getDebugLoc().get();
 
@@ -94,10 +99,17 @@ void CDMAsmPrinter::emitInstruction(const MachineInstr *Instr) {
     std::optional<int> sourceFileIndex = getSourceFileIndex(checksum);
 
     if (sourceFileIndex) {
-      OutStreamer->emitRawText(formatv("\tdbg_loc {0}, {1}, {2}\n",
-                                       *sourceFileIndex, 
-                                       debugLoc->getLine(),
-                                       debugLoc->getColumn()));
+      unsigned currentLineNumber = debugLoc->getLine();
+
+      if (previousLineNumber != currentLineNumber || previousFileIndex != sourceFileIndex) {
+        OutStreamer->emitRawText(formatv("\n\tdbg_loc {0}, {1}, {2}\n",
+                                         *sourceFileIndex, 
+                                         currentLineNumber,
+                                         debugLoc->getColumn()));
+
+        previousLineNumber = currentLineNumber;
+        previousFileIndex = *sourceFileIndex;
+      }
     }
   }
 
