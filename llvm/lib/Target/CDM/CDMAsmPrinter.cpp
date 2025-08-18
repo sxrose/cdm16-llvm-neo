@@ -69,7 +69,7 @@ void CDMAsmPrinter::collectAndEmitSourceFiles(Module &module) {
           std::string path = llvm::sys::path::convert_to_slash(rawPath);
 
           if (!getSourceFileIndex(checksum)) {
-            OutStreamer->emitRawText(formatv("dbg_file {0}, \"{1}\"\n", this->sourceFiles.size(), path));
+            OutStreamer->emitRawText(formatv("dbg_source {0}, \"{1}\"\n", this->sourceFiles.size(), path));
             this->sourceFiles.insert({checksum, this->sourceFiles.size()});
           }
         }
