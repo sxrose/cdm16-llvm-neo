@@ -101,9 +101,8 @@ void CDMInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
   MIB.addReg(SrcReg, getKillRegState(KillSrc));
 }
 void CDMInstrInfo::adjustStackPtr(int64_t Amount, MachineBasicBlock &MBB,
-                                  MachineBasicBlock::iterator I) const {
-  DebugLoc DL = DebugLoc();
-
+                                  MachineBasicBlock::iterator I,
+				  const DebugLoc &DL) const {
   BuildMI(MBB, I, DL, get(CDM::ADDSP)).addImm(Amount);
 }
 } // namespace llvm
