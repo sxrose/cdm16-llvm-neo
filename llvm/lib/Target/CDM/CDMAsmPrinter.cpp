@@ -102,10 +102,11 @@ void CDMAsmPrinter::emitInstruction(const MachineInstr *Instr) {
       unsigned currentLineNumber = debugLoc->getLine();
 
       if (previousLineNumber != currentLineNumber || previousFileIndex != sourceFileIndex) {
-        OutStreamer->emitRawText(formatv("\n\tdbg_loc {0}, {1}, {2}\n",
+        OutStreamer->emitRawText(formatv("\n\tdbg_loc {0}, {1}, {2}\t\t# {3}:{1}:{2}\n",
                                          *sourceFileIndex, 
                                          currentLineNumber,
-                                         debugLoc->getColumn()));
+                                         debugLoc->getColumn(),
+					 debugLoc->getFilename()));
 
         previousLineNumber = currentLineNumber;
         previousFileIndex = *sourceFileIndex;
