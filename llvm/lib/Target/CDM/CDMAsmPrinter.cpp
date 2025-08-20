@@ -81,8 +81,8 @@ void CDMAsmPrinter::collectAndEmitSourceFiles(Module &module) {
 }
 
 void CDMAsmPrinter::emitInstruction(const MachineInstr *Instr) {
-  static unsigned previousLineNumber = 0;
-  static int previousFileIndex = -1;
+  static unsigned prevLineNumber = 0, prevColumnNumber = 0;
+  static int prevFileIndex = -1;
 
   if (Instr->isDebugValue()) {
     // TODO: implement
@@ -99,17 +99,26 @@ void CDMAsmPrinter::emitInstruction(const MachineInstr *Instr) {
     std::optional<int> sourceFileIndex = getSourceFileIndex(checksum);
 
     if (sourceFileIndex) {
-      unsigned currentLineNumber = debugLoc->getLine();
+      unsigned currLineNumber = debugLoc->getLine(), currColumnNumber = debugLoc->getColumn();
 
-      if (previousLineNumber != currentLineNumber || previousFileIndex != sourceFileIndex) {
-        OutStreamer->emitRawText(formatv("\n\tdbg_loc {0}, {1}, {2}\t\t# {3}:{1}:{2}\n",
+      if (prevLineNumber != currLineNumber ||
+          prevFileIndex != sourceFileIndex ||
+          prevColumnNumber != currColumnNumber) {
+
+	OutStreamer->getCommentOS()
+		<< formatv("{0}:{1}:{2}",
+			   debugLoc->getFilename(),
+			   currLineNumber,
+			   currColumnNumber) << "\n";
+
+        OutStreamer->emitRawText(formatv("\n\tdbg_loc {0}, {1}, {2}",
                                          *sourceFileIndex, 
-                                         currentLineNumber,
-                                         debugLoc->getColumn(),
-					 debugLoc->getFilename()));
+                                         currLineNumber,
+                                         currColumnNumber));
 
-        previousLineNumber = currentLineNumber;
-        previousFileIndex = *sourceFileIndex;
+        prevLineNumber = currLineNumber;
+	prevColumnNumber = currColumnNumber;
+        prevFileIndex = *sourceFileIndex;
       }
     }
   }
