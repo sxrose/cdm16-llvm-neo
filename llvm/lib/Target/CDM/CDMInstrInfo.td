@@ -82,7 +82,9 @@ class arithLogicRi<string asm_instr, SDNode OpNode>
 // end thanks avr
 
 def NEG : CDMInst<(outs CPURegs:$rd), (ins CPURegs:$rs),
-              "neg\t$rs, $rd", []>;
+              "neg\t$rs, $rd", []>{
+  let Defs = [PSR];
+}
 
 def : Pat<(i16(sub 0, i16:$val)), (NEG $val)>;
 
