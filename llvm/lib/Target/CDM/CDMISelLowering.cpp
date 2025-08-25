@@ -41,6 +41,8 @@ CDMISelLowering::CDMISelLowering(const CDMTargetMachine &TM,
 
   setOperationAction(ISD::GlobalAddress, MVT::i16, Custom);
 
+  setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i1, Expand);
+
   // Custom lowering
   setOperationAction(ISD::VASTART, MVT::Other, Custom);
   // Default lowering
