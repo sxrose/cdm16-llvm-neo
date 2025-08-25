@@ -2,7 +2,7 @@
 
 // On early stage of vararg development I need to pass at least 4 arguments to
 // the variadic function to make it work.
-int sum(int Count, int A, int B, int C, ...) {
+__attribute__((noinline)) int sum(int Count, int A, int B, int C, ...) {
   va_list Args;
   va_start(Args, C);
 

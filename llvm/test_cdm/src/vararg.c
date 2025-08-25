@@ -1,6 +1,6 @@
 #include <stdarg.h>
 
-int sum(int Count, ...) {
+__attribute__((noinline)) int sum(int Count, ...) {
   va_list Args;
   va_start(Args, Count);
 
