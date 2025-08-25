@@ -1,8 +1,9 @@
-int foo(int a, int b, int c, int d, int e, int f, int g) {
+__attribute__((noinline)) int foo(int a, int b, int c, int d, int e, int f,
+                                  int g) {
   return f;
 }
 
-int main() {
+__attribute__((optnone)) int main() {
   int a = 4;
   int b = 5;
   int c = foo(a, b, 3, 4, 5, 67, 7);

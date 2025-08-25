@@ -1,6 +1,6 @@
 #include <stdarg.h>
 
-long long sum(int Count, ...) {
+__attribute__((noinline)) long long sum(int Count, ...) {
   long long Result = 0;
 
   va_list Args;
