@@ -35,7 +35,7 @@ void CDMFrameLowering::emitPrologue(MachineFunction &MF,
       *static_cast<const CDMInstrInfo *>(STI.getInstrInfo());
 
   MachineBasicBlock::iterator MBBI = MBB.begin();
-  DebugLoc DL = MBBI != MBB.end() ? MBBI->getDebugLoc() : DebugLoc();
+  DebugLoc DL = DebugLoc();
 
   // First, compute final stack size.
   uint64_t StackSize = MFI.getStackSize();
@@ -46,7 +46,7 @@ void CDMFrameLowering::emitPrologue(MachineFunction &MF,
   }
 
   if (StackSize != 0) {
-    TII.adjustStackPtr(-StackSize, MBB, MBBI);
+    TII.adjustStackPtr(-StackSize, MBB, MBBI, DL);
   }
 }
 
@@ -64,7 +64,7 @@ void CDMFrameLowering::emitEpilogue(MachineFunction &MF,
   uint64_t StackSize = MFI.getStackSize();
 
   if (StackSize != 0) {
-    TII.adjustStackPtr(StackSize, MBB, MBBI);
+    TII.adjustStackPtr(StackSize, MBB, MBBI, DL);
   }
 
   if (hasFP(MF)) {
@@ -82,8 +82,10 @@ MachineBasicBlock::iterator CDMFrameLowering::eliminateCallFramePseudoInstr(
   auto &TII =
       *static_cast<const CDMInstrInfo *>(MF.getSubtarget().getInstrInfo());
 
+  DebugLoc DL = MI != MBB.end() ? MI->getDebugLoc() : DebugLoc();
+
   if (Size)
-    TII.adjustStackPtr(Size, MBB, MI);
+    TII.adjustStackPtr(Size, MBB, MI, DL);
   return MBB.erase(MI);
 }
 } // namespace llvm

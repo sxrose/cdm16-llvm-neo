@@ -59,7 +59,8 @@ public:
                    bool KillSrc) const override;
 
   void adjustStackPtr(int64_t Amount, MachineBasicBlock &MBB,
-                      MachineBasicBlock::iterator I) const;
+                      MachineBasicBlock::iterator I, const DebugLoc &DL) const;
+
   CDMCOND::CondOp CCToCondOp(ISD::CondCode CC) const {
     if (!CondMap.count(CC)) {
       llvm_unreachable("Unknown branch condition");

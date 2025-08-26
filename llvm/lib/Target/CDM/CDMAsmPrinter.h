@@ -7,15 +7,21 @@
 
 #include "CDMMCInstLower.h"
 
+#include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/CodeGen/AsmPrinter.h"
 #include "llvm/IR/GlobalVariable.h"
 #include "llvm/MC/MCSection.h"
 #include "llvm/MC/MCStreamer.h"
+
 namespace llvm {
 
 class CDMAsmPrinter : public AsmPrinter {
   CDMMCInstLower MCInstLower;
+  llvm::StringMap<int> SourceFiles;
+
+  std::optional<int> getSourceFileIndex(StringRef Checksum);
+  void collectAndEmitSourceFiles(Module &Module);
 
 public:
   explicit CDMAsmPrinter(TargetMachine &TM,

@@ -46,7 +46,6 @@ def run_test(
         asm_gen_process = subprocess.run(
             [
                 "./clang",
-                "-g",
                 "-target",
                 "cdm",
                 "-S",
