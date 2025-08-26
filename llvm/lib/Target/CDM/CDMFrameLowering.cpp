@@ -45,7 +45,7 @@ void CDMFrameLowering::emitPrologue(MachineFunction &MF,
     BuildMI(MBB, MBBI, DL, TII.get(CDM::LDSP)).addReg(CDM::FP);
   }
 
-  if (StackSize != 0){
+  if (StackSize != 0) {
     TII.adjustStackPtr(-StackSize, MBB, MBBI, DL);
   }
 }
@@ -63,8 +63,8 @@ void CDMFrameLowering::emitEpilogue(MachineFunction &MF,
   // Get the number of bytes from FrameInfo
   uint64_t StackSize = MFI.getStackSize();
 
-  if (StackSize != 0){
-	  TII.adjustStackPtr(StackSize, MBB, MBBI, DL);
+  if (StackSize != 0) {
+    TII.adjustStackPtr(StackSize, MBB, MBBI, DL);
   }
 
   if (hasFP(MF)) {

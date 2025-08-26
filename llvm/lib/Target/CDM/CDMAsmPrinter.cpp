@@ -5,6 +5,7 @@
 #include "CDMAsmPrinter.h"
 #include "TargetInfo/CDMTargetInfo.h"
 #include "llvm/ADT/StringExtras.h"
+#include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/CodeGen/AsmPrinter.h"
@@ -15,6 +16,8 @@
 #include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/CodeGen/MachineOperand.h"
 #include "llvm/IR/BasicBlock.h"
+#include "llvm/IR/DebugInfoMetadata.h"
+#include "llvm/IR/DebugLoc.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/Mangler.h"
 #include "llvm/IR/Module.h"
@@ -26,13 +29,10 @@
 #include "llvm/MC/TargetRegistry.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/FormatVariadic.h"
+#include "llvm/Support/Path.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetLoweringObjectFile.h"
 #include "llvm/Target/TargetOptions.h"
-#include "llvm/IR/DebugInfoMetadata.h"
-#include "llvm/IR/DebugLoc.h"
-#include "llvm/Support/Path.h"
-#include "llvm/ADT/StringMap.h"
 #include <set>
 
 using namespace llvm;
@@ -41,36 +41,39 @@ extern "C" LLVM_EXTERNAL_VISIBILITY void LLVMInitializeCDMAsmPrinter() {
   RegisterAsmPrinter<CDMAsmPrinter> X(getTheCDMTarget());
 }
 
-std::optional<int> CDMAsmPrinter::getSourceFileIndex(StringRef checksum) {
-  if (this->sourceFiles.contains(checksum)) {
-    return this->sourceFiles.lookup(checksum);
+std::optional<int> CDMAsmPrinter::getSourceFileIndex(StringRef Checksum) {
+  if (this->SourceFiles.contains(Checksum)) {
+    return this->SourceFiles.lookup(Checksum);
   }
 
   return std::nullopt;
 }
 
-void CDMAsmPrinter::collectAndEmitSourceFiles(Module &module) {
-  for (Function &function : module) {
-    for (BasicBlock &basic_block : function) {
-      for (Instruction &instruction : basic_block) {
-        DILocation *debugLoc = instruction.getDebugLoc().get();
+void CDMAsmPrinter::collectAndEmitSourceFiles(Module &Module) {
+  for (Function &Function : Module) {
+    for (BasicBlock &BasicBlock : Function) {
+      for (Instruction &Instruction : BasicBlock) {
+        DILocation *DebugLoc = Instruction.getDebugLoc().get();
 
-        if (debugLoc) {
-          StringRef checksum = debugLoc->getFile()->getChecksum().value().Value;
+        if (DebugLoc) {
+          StringRef Checksum = DebugLoc->getFile()->getChecksum().value().Value;
 
-          StringRef dirRef = debugLoc->getFile()->getDirectory();
-          StringRef fileRef = debugLoc->getFile()->getFilename();
+          StringRef DirRef = DebugLoc->getFile()->getDirectory();
+          StringRef FileRef = DebugLoc->getFile()->getFilename();
 
-          auto dir = Twine(llvm::sys::path::remove_leading_dotslash(dirRef));
-          auto file = Twine(llvm::sys::path::remove_leading_dotslash(fileRef));
+          const Twine &Dir =
+              Twine(llvm::sys::path::remove_leading_dotslash(DirRef));
+          const Twine &File =
+              Twine(llvm::sys::path::remove_leading_dotslash(FileRef));
 
-          std::string rawPath = dir.concat("/").concat(file).str();
+          std::string RawPath = Dir.concat("/").concat(File).str();
 
-          std::string path = llvm::sys::path::convert_to_slash(rawPath);
+          std::string Path = llvm::sys::path::convert_to_slash(RawPath);
 
-          if (!getSourceFileIndex(checksum)) {
-            OutStreamer->emitRawText(formatv("dbg_source {0}, \"{1}\"\n", this->sourceFiles.size(), path));
-            this->sourceFiles.insert({checksum, this->sourceFiles.size()});
+          if (!getSourceFileIndex(Checksum)) {
+            OutStreamer->emitRawText(formatv("dbg_source {0}, \"{1}\"\n",
+                                             this->SourceFiles.size(), Path));
+            this->SourceFiles.insert({Checksum, this->SourceFiles.size()});
           }
         }
       }
@@ -81,8 +84,8 @@ void CDMAsmPrinter::collectAndEmitSourceFiles(Module &module) {
 }
 
 void CDMAsmPrinter::emitInstruction(const MachineInstr *Instr) {
-  static unsigned prevLineNumber = 0;
-  static int prevFileIndex = -1;
+  static unsigned PrevLineNumber = 0;
+  static int PrevFileIndex = -1;
 
   if (Instr->isDebugValue()) {
     // TODO: implement
@@ -91,32 +94,31 @@ void CDMAsmPrinter::emitInstruction(const MachineInstr *Instr) {
   if (Instr->isDebugLabel())
     return;
 
-  DILocation *debugLoc = Instr->getDebugLoc().get();
+  DILocation *DebugLoc = Instr->getDebugLoc().get();
 
-  if (debugLoc) {
-    StringRef checksum = debugLoc->getFile()->getChecksum().value().Value;
+  if (DebugLoc) {
+    StringRef Checksum = DebugLoc->getFile()->getChecksum().value().Value;
 
-    std::optional<int> sourceFileIndex = getSourceFileIndex(checksum);
+    std::optional<int> SourceFileIndex = getSourceFileIndex(Checksum);
 
-    if (sourceFileIndex) {
-      unsigned currLineNumber = debugLoc->getLine(), currColumnNumber = debugLoc->getColumn();
+    if (SourceFileIndex) {
+      unsigned CurrLineNumber = DebugLoc->getLine(),
+               CurrColumnNumber = DebugLoc->getColumn();
 
-      if (prevLineNumber != currLineNumber ||
-          prevFileIndex != sourceFileIndex) {
+      if (PrevLineNumber != CurrLineNumber ||
+          PrevFileIndex != SourceFileIndex) {
 
-	OutStreamer->getCommentOS()
-		<< formatv("{0}:{1}:{2}",
-			   debugLoc->getFilename(),
-			   currLineNumber,
-			   currColumnNumber) << "\n";
+        OutStreamer->getCommentOS()
+            << formatv("{0}:{1}:{2}", DebugLoc->getFilename(), CurrLineNumber,
+                       CurrColumnNumber)
+            << "\n";
 
         OutStreamer->emitRawText(formatv("\n\tdbg_loc {0}, {1}, {2}",
-                                         *sourceFileIndex, 
-                                         currLineNumber,
-                                         currColumnNumber));
+                                         *SourceFileIndex, CurrLineNumber,
+                                         CurrColumnNumber));
 
-        prevLineNumber = currLineNumber;
-        prevFileIndex = *sourceFileIndex;
+        PrevLineNumber = CurrLineNumber;
+        PrevFileIndex = *SourceFileIndex;
       }
     }
   }
