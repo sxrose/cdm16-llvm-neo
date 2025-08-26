@@ -4,6 +4,8 @@
 
 #include "CDMIselDAGToDAG.h"
 
+#include "llvm/ADT/SmallVector.h"
+#include "llvm/CodeGen/ISDOpcodes.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
@@ -12,6 +14,8 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
+#include <algorithm>
+#include <utility>
 
 using namespace llvm;
 
@@ -40,14 +44,24 @@ void CDMDagToDagIsel::Select(SDNode *N) {
     return;
   }
 
+  if (N->getOpcode() == CDMISD::Call) {
+    // Generate JSRR if needed, otherwise fall to
+    // default tablegen pattern matching
+    if (trySelectPointerCall(N))
+      return;
+  }
+
   SelectCode(N);
 }
+
 bool CDMDagToDagIsel::runOnMachineFunction(MachineFunction &MF) {
   return SelectionDAGISel::runOnMachineFunction(MF);
 }
+
 bool CDMDagToDagIsel::trySelect(SDNode *Node) {
   return false; // TODO: actually select
 }
+
 bool CDMDagToDagIsel::SelectAddrFrameIndex(SDNode *Parent, SDValue Addr,
                                            SDValue &Base, SDValue &Offset) {
   EVT ValTy = Addr.getValueType();
@@ -62,6 +76,53 @@ bool CDMDagToDagIsel::SelectAddrFrameIndex(SDNode *Parent, SDValue Addr,
   // Cant load not from stack yet
   LLVM_DEBUG(errs() << "[LEADP] Cant select frame address\n");
   return false;
+}
+
+bool CDMDagToDagIsel::trySelectPointerCall(SDNode *N) {
+  SDValue Target = N->getOperand(1);
+
+  // If target is just symbol, pass through to default tablegen pattern matching
+  if (dyn_cast<GlobalAddressSDNode>(Target) != nullptr ||
+      dyn_cast<ExternalSymbolSDNode>(Target) != nullptr)
+    return false;
+
+  // Layout of CDMCall node's operands is:
+  // [Chain, Target, <Arg0>, ..., Mask, <Glue>]
+  //
+  // Layout for JSRR/JSR needs to be:
+  // [Target, <Arg0>, ..., Mask, Chain, <Glue>]
+
+  SmallVector<SDValue> Operands = {Target};
+
+  auto *const ArgsBegin = N->op_begin() + 2;
+  auto *const ArgsEnd =
+      std::find_if(ArgsBegin, N->op_end(), [](const SDUse &UseOp) {
+        return static_cast<ISD::NodeType>(UseOp.get().getOpcode()) ==
+               ISD::RegisterMask;
+      });
+
+  if (ArgsEnd == N->op_end())
+    llvm_unreachable("CDMCall Node missing RegisterMask, can't find end of "
+                     "argument operands");
+
+  std::copy(ArgsBegin, ArgsEnd, std::back_inserter(Operands));
+
+  SDValue Mask = *ArgsEnd;
+  Operands.push_back(std::move(Mask));
+
+  SDValue Chain = N->getOperand(0);
+  Operands.push_back(Chain);
+
+  // The last operand (Glue) is not always necessary, so we check if we are at
+  // the end yet
+  if ((ArgsEnd + 1) < N->op_end()) {
+    SDValue Glue = *(ArgsEnd + 1);
+    Operands.push_back(std::move(Glue));
+  }
+
+  CurDAG->SelectNodeTo(N, CDM::JSRR, MVT::Other, MVT::Glue, Operands);
+
+  return true;
 }
 
 // This is manual solution

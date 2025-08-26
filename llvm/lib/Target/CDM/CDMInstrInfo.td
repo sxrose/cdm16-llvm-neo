@@ -361,6 +361,10 @@ def JSR : CDMInst<(outs), (ins calltarget:$target, variable_ops),
   let isCall = 1;
 }
 
+def JSRR : CDMInst<(outs), (ins CPURegs:$rs, variable_ops), "jsrr\t$rs", []> {
+  let isCall = 1;
+}
+
 def : Pat<(CDMCall(i16 tglobaladdr:$target)), (JSR tglobaladdr:$target)>;
 def : Pat<(CDMCall(i16 texternalsym:$target)), (JSR texternalsym:$target)>;
 

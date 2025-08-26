@@ -28,6 +28,8 @@ private:
                             SDValue &Offset);
   bool SelectAddr(SDNode *Parent, SDValue Addr, SDValue &Base, SDValue &Offset);
   bool SelectAddrRR(SDValue Addr, SDValue &Base, SDValue &Offset);
+
+  bool trySelectPointerCall(SDNode *N);
   bool SelectConditionalBranch(SDNode *N);
   bool SelectBRCOND(SDNode *N);
 };

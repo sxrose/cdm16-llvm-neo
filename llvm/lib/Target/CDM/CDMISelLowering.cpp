@@ -355,9 +355,6 @@ SDValue CDMISelLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
     Callee = DAG.getTargetGlobalAddress(G->getGlobal(), Loc, PtrVT, 0);
   } else if (ExternalSymbolSDNode *S = dyn_cast<ExternalSymbolSDNode>(Callee)) {
     Callee = DAG.getTargetExternalSymbol(S->getSymbol(), PtrVT, 0);
-  } else {
-    llvm_unreachable(
-        "We only support the calling of global addresses and external symbols");
   }
 
   std::vector<SDValue> Ops;
@@ -493,8 +490,8 @@ CDMISelLowering::EmitInstrWithCustomInserter(MachineInstr &MI,
 
   // TODO: check if glue needed
   BuildMI(HeadMBB, DL, TII.get(CDM::CMP))
-	  .addReg(LHS.getReg())
-	  .addReg(RHS.getReg());
+      .addReg(LHS.getReg())
+      .addReg(RHS.getReg());
 
   BuildMI(HeadMBB, DL, TII.get(CDM::BCond))
       .addImm(TII.CCToCondOp(CondCode))
