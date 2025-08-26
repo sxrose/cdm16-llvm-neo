@@ -81,7 +81,7 @@ void CDMAsmPrinter::collectAndEmitSourceFiles(Module &module) {
 }
 
 void CDMAsmPrinter::emitInstruction(const MachineInstr *Instr) {
-  static unsigned prevLineNumber = 0, prevColumnNumber = 0;
+  static unsigned prevLineNumber = 0;
   static int prevFileIndex = -1;
 
   if (Instr->isDebugValue()) {
@@ -102,8 +102,7 @@ void CDMAsmPrinter::emitInstruction(const MachineInstr *Instr) {
       unsigned currLineNumber = debugLoc->getLine(), currColumnNumber = debugLoc->getColumn();
 
       if (prevLineNumber != currLineNumber ||
-          prevFileIndex != sourceFileIndex ||
-          prevColumnNumber != currColumnNumber) {
+          prevFileIndex != sourceFileIndex) {
 
 	OutStreamer->getCommentOS()
 		<< formatv("{0}:{1}:{2}",
@@ -117,7 +116,6 @@ void CDMAsmPrinter::emitInstruction(const MachineInstr *Instr) {
                                          currColumnNumber));
 
         prevLineNumber = currLineNumber;
-	prevColumnNumber = currColumnNumber;
         prevFileIndex = *sourceFileIndex;
       }
     }
