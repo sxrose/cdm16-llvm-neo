@@ -1,6 +1,10 @@
 name: Build clang with CDM target
 
-on: workflow_dispatch
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - 'cdm-ver-*'
 
 jobs:
   build_posix:
@@ -59,3 +63,34 @@ jobs:
         with:
           name: clang-cdm-windows
           path: ./build/bin/clang.exe
+
+  create-release:
+    needs: [build_posix, build_for_windows]
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'push' && succes() && startsWith(github.ref, 'refs/tags/cdm-ver-') }}  
+    steps:
+      - name: Create subfolder
+        run: mkdir artifacts_download
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: ./artifacts_download
+      - name: Print files list
+        run: find .
+      - name: ls folder
+        run: ls -la ./artifacts_download
+      - name: zip artifacts_data
+        run: cd ./artifacts_download && for dir in */; do [ -d "$dir" ] && zip -r "${dir%/}.zip" "${dir%/}" && rm -r "${dir%/}"; done
+      - name: Print files list
+        run: find .
+      - name: ls folder
+        run: ls -la ./artifacts_download
+      - name: Create release
+        uses: softprops/action-gh-release@v2
+        with:
+          body: clang cdm-16 backend version ${{github.ref_name}}, macos-13 is x86 (will be deleted in the future)
+          draft: false
+          prerelease: false
+          token: ${{ secrets.GITHUB_TOKEN }}
+          files: |
+            ${{github.workspace}}/artifacts_download/*.zip
