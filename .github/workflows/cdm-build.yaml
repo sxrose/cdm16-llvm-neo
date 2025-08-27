@@ -1,11 +1,9 @@
-name: Create release on tag
+name: Build clang with CDM target
 
-on:
-    workflow_dispatch:
-    push:
+on: workflow_dispatch
 
 jobs:
-  example_matrix:
+  build_posix:
     strategy:
       matrix:
         os: [ubuntu-latest, macos-13, macos-latest]
@@ -60,4 +58,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: clang-cdm-windows
-          path: ./build/bin/clang.exe 
+          path: ./build/bin/clang.exe
