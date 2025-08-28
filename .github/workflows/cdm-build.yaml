@@ -20,20 +20,30 @@ jobs:
       - name: install ninja
         uses: seanmiddleditch/gha-setup-ninja@master
       - name: initialize cmake folder
-        run: cmake -S llvm -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DLLVM_ENABLE_ASSERTIONS=ON -DLLVM_ENABLE_PROJECTS=clang -DLLVM_TARGETS_TO_BUILD= -DLLVM_PARALLEL_LINK_JOBS=2 -DLLVM_EXPERIMENTAL_TARGETS_TO_BUILD=CDM -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DLLVM_DEFAULT_TARGET_TRIPLE=cdm
+        run: cmake -S llvm -B llvm/build -G Ninja -DCMAKE_BUILD_TYPE=Release -DLLVM_ENABLE_ASSERTIONS=ON -DLLVM_ENABLE_PROJECTS=clang -DLLVM_TARGETS_TO_BUILD= -DLLVM_PARALLEL_LINK_JOBS=2 -DLLVM_EXPERIMENTAL_TARGETS_TO_BUILD=CDM -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DLLVM_DEFAULT_TARGET_TRIPLE=cdm
       - name: build clang
         run: |
-              cd build
+              cd ./llvm/build
               ninja clang
       - name: list folder recursivly
         run: |
-              cd ./build/bin
+              cd ./llvm/build/bin
               find .
+      - name: install docker
+        uses: docker/setup-docker-action@v4
+      - name: install python
+        uses: actions/setup-python@v5
+      - name: run tests (posix)
+        run: |
+              pip install pytest pytest-xdist six
+              cd ./llvm/test_cdm
+              make
       - name: upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: clang-cdm-${{ matrix.os }}
-          path: ./build/bin/clang-19          
+          path: ./llvm/build/bin/clang-19
+
   build_for_windows:
     runs-on: windows-latest
     steps:          
@@ -43,26 +53,31 @@ jobs:
       - name: install ninja
         uses: seanmiddleditch/gha-setup-ninja@master
       - name: initialize cmake folder
-        run: cmake -S llvm -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DLLVM_ENABLE_ASSERTIONS=ON -DLLVM_ENABLE_PROJECTS=clang -DLLVM_TARGETS_TO_BUILD=X86 -DLLVM_PARALLEL_LINK_JOBS=2 -DCMAKE_C_COMPILER=cl -DCMAKE_CXX_COMPILER=cl -DLLVM_EXPERIMENTAL_TARGETS_TO_BUILD=CDM -DLLVM_DEFAULT_TARGET_TRIPLE=cdm
+        run: cmake -S llvm -B llvm/build -G Ninja -DCMAKE_BUILD_TYPE=Release -DLLVM_ENABLE_ASSERTIONS=ON -DLLVM_ENABLE_PROJECTS=clang -DLLVM_TARGETS_TO_BUILD=X86 -DLLVM_PARALLEL_LINK_JOBS=2 -DCMAKE_C_COMPILER=cl -DCMAKE_CXX_COMPILER=cl -DLLVM_EXPERIMENTAL_TARGETS_TO_BUILD=CDM -DLLVM_DEFAULT_TARGET_TRIPLE=cdm
       - name: build clang
         run: |
-              cd build
+              cd ./llvm/build
               ninja clang
       - name: list folders
         run: ls
-      - name: action for debug
-        run: |
-              cd ./build/
-              Get-ChildItem -Recurse
       - name: list folder recursivly
         run: |
-              cd ./build/bin
+              cd ./llvm/build/bin
               Get-ChildItem -Recurse
+      - name: install docker
+        uses: docker/setup-docker-action@v4
+      - name: install python
+        uses: actions/setup-python@v5
+      - name: run tests (windows)
+        run: |
+              pip install pytest pytest-xdist six
+              cd ./llvm/test_cdm
+              make
       - name: upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: clang-cdm-windows
-          path: ./build/bin/clang.exe
+          path: ./llvm/build/bin/clang.exe
 
   create-release:
     needs: [build_posix, build_for_windows]
