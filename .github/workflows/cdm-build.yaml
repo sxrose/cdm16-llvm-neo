@@ -67,7 +67,7 @@ jobs:
   create-release:
     needs: [build_posix, build_for_windows]
     runs-on: ubuntu-latest
-    if: ${{ github.event_name == 'push' && succes() && startsWith(github.ref, 'refs/tags/cdm-ver-') }}  
+    if: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/tags/cdm-ver-') }}  
     steps:
       - name: Create subfolder
         run: mkdir artifacts_download
