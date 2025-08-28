@@ -32,7 +32,7 @@ jobs:
       - name: install python
         if: ${{ !contains(matrix.os, 'macos') }}
         uses: actions/setup-python@v5
-      - name: run tests (posix)
+      - name: run tests
         if: ${{ !contains(matrix.os, 'macos') }}
         run: |
               pip install pytest pytest-xdist six
@@ -64,13 +64,6 @@ jobs:
         run: |
               cd ./llvm/build/bin
               Get-ChildItem -Recurse
-      - name: install python
-        uses: actions/setup-python@v5
-      - name: run tests (windows)
-        run: |
-              pip install pytest pytest-xdist six
-              cd ./llvm/test_cdm
-              make
       - name: upload artifacts
         uses: actions/upload-artifact@v4
         with:
