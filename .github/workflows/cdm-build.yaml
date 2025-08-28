@@ -30,13 +30,13 @@ jobs:
               cd ./llvm/build/bin
               find .
       - name: install docker
-        if: ${{ matrix.os != 'macos-latest' }}
+        if: ${{ !contains(matrix.os, 'macos') }}
         uses: docker/setup-docker-action@v4
       - name: install python
-        if: ${{ matrix.os != 'macos-latest' }}
+        if: ${{ !contains(matrix.os, 'macos') }}
         uses: actions/setup-python@v5
       - name: run tests (posix)
-        if: ${{ matrix.os != 'macos-latest' }}
+        if: ${{ !contains(matrix.os, 'macos') }}
         run: |
               pip install pytest pytest-xdist six
               cd ./llvm/test_cdm
