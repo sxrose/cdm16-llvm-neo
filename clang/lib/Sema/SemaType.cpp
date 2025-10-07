@@ -144,7 +144,7 @@ static void diagnoseBadTypeAttribute(Sema &S, const ParsedAttr &attr,
   case ParsedAttr::AT_M68kRTD:                                                 \
   case ParsedAttr::AT_PreserveNone:                                            \
   case ParsedAttr::AT_RISCVVectorCC:                                           \
-  case ParsedAttr::AT_RISCVVLSCC:
+  case ParsedAttr::AT_RISCVVLSCC:                                              \
   case ParsedAttr::AT_CDM_ISR
 
 // Function type attributes.
@@ -3698,7 +3698,7 @@ static CallingConv getCCForDeclaratorChunk(
   // Check for an explicit CC attribute.
   for (const ParsedAttr &AL : AttrList) {
     switch (AL.getKind()) {
-    CALLING_CONV_ATTRS_CASELIST : {
+    CALLING_CONV_ATTRS_CASELIST: {
       // Ignore attributes that don't validate or can't apply to the
       // function type.  We'll diagnose the failure to apply them in
       // handleFunctionTypeAttr.

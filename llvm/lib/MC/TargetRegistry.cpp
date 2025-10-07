@@ -91,8 +91,9 @@ MCStreamer *Target::createAsmStreamer(MCContext &Ctx,
     S = AsmStreamerCtorFn(Ctx, std::move(OS), std::move(IP), std::move(CE),
                           std::move(TAB));
   else
-    S = llvm::createAsmStreamer(Ctx, std::move(OS), std::move(IP),
-                                std::move(CE), std::move(TAB));
+    S = llvm::createAsmStreamer(
+        Ctx, std::move(OS), std::move(IP), std::move(CE), std::move(TAB),
+        strcmp(getName(), "cdm") == 0); // TODO: Do not use string comparison
 
   createAsmTargetStreamer(*S, OSRef, Printer);
   return S;
@@ -196,7 +197,7 @@ static int TargetArraySortFn(const std::pair<StringRef, const Target *> *LHS,
 }
 
 void TargetRegistry::printRegisteredTargetsForVersion(raw_ostream &OS) {
-  std::vector<std::pair<StringRef, const Target*> > Targets;
+  std::vector<std::pair<StringRef, const Target *>> Targets;
   size_t Width = 0;
   for (const auto &T : TargetRegistry::targets()) {
     Targets.push_back(std::make_pair(T.getName(), &T));

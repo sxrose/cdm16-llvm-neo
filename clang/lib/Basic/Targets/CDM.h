@@ -14,7 +14,7 @@ public:
       : TargetInfo(Triple) {
     TLSSupported = false;
     PointerWidth = 16;
-    PointerAlign = 8;
+    PointerAlign = 16;
     IntWidth = 16;
     IntAlign = 16;
     LongWidth = 32;
@@ -42,11 +42,11 @@ public:
     Char32Type = UnsignedLong;
     SigAtomicType = SignedChar;
     resetDataLayout("e-S16-p:16:16-i8:8-i16:16-i32:16-i64:16-f16:16-f32:16-"
-                    "f128:16-m:C-n16");
+                    "f64:16-f128:16-m:C-n16");
   }
 
-  ArrayRef<Builtin::Info> getTargetBuiltins() const override {
-    return std::nullopt;
+  llvm::SmallVector<Builtin::InfosShard> getTargetBuiltins() const override {
+    return {};
   }
 
   void getTargetDefines(const LangOptions &Opts,
@@ -64,7 +64,7 @@ public:
   }
 
   ArrayRef<TargetInfo::GCCRegAlias> getGCCRegAliases() const override {
-    return std::nullopt;
+    return {};
   }
 
   bool validateAsmConstraint(const char *&Name,
