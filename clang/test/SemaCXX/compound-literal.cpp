@@ -1,6 +1,6 @@
-// RUN: %clang_cc1 -fsyntax-only -std=c++03 -verify -ast-dump %s > %t-03
+// RUN: %clang_cc1 -std=c++03 -verify -ast-dump %s > %t-03
 // RUN: FileCheck --input-file=%t-03 %s
-// RUN: %clang_cc1 -fsyntax-only -std=c++11 -verify -ast-dump %s > %t-11
+// RUN: %clang_cc1 -std=c++11 -verify -ast-dump %s > %t-11
 // RUN: FileCheck --input-file=%t-11 %s
 // RUN: FileCheck --input-file=%t-11 %s --check-prefix=CHECK-CXX11
 // RUN: %clang_cc1 -verify -std=c++17 %s
@@ -129,3 +129,11 @@ int f();
 #endif
 Foo o = (Foo){ {}, 1, f() };
 }
+
+#if __cplusplus >= 201103L
+namespace GH147949 {
+  // Make sure we handle transparent InitListExprs correctly.
+  struct S { int x : 3; };
+  const S* x = (const S[]){S{S{3}}};
+}
+#endif

@@ -154,8 +154,19 @@ public:
     /// depth of recursion.
     LambdaScope = 0x8000000,
     /// This is the scope of an OpenACC Compute Construct, which restricts
-    /// jumping into/out of it.
+    /// jumping into/out of it. We also use this to represent 'combined'
+    /// constructs, since they have the same behavior.
     OpenACCComputeConstructScope = 0x10000000,
+
+    /// This is the scope of an OpenACC Loop/Combined construct, which is used
+    /// to determine whether a 'cache' construct variable reference is legal.
+    OpenACCLoopConstructScope = 0x20000000,
+
+    /// This is a scope of type alias declaration.
+    TypeAliasScope = 0x40000000,
+
+    /// This is a scope of friend declaration.
+    FriendScope = 0x80000000,
   };
 
 private:
@@ -287,7 +298,7 @@ public:
   // is disallowed despite being a continue scope.
   void setIsConditionVarScope(bool InConditionVarScope) {
     Flags = (Flags & ~ConditionVarScope) |
-            (InConditionVarScope ? ConditionVarScope : 0);
+            (InConditionVarScope ? ConditionVarScope : NoScope);
   }
 
   bool isConditionVarScope() const {
@@ -420,6 +431,17 @@ public:
     return false;
   }
 
+  /// isInObjcMethodScope - Return true if this scope is, or is contained, in an
+  /// C function body.
+  bool isInCFunctionScope() const {
+    for (const Scope *S = this; S; S = S->getParent()) {
+      if (S->isFunctionScope())
+        return true;
+    }
+
+    return false;
+  }
+
   /// isInObjcMethodScope - Return true if this scope is, or is contained in, an
   /// Objective-C method body.  Note that this method is not constant time.
   bool isInObjcMethodScope() const {
@@ -531,6 +553,10 @@ public:
     return getFlags() & Scope::OpenACCComputeConstructScope;
   }
 
+  bool isOpenACCLoopConstructScope() const {
+    return getFlags() & Scope::OpenACCLoopConstructScope;
+  }
+
   /// Determine if this scope (or its parents) are a compute construct. If the
   /// argument is provided, the search will stop at any of the specified scopes.
   /// Otherwise, it will stop only at the normal 'no longer search' scopes.
@@ -579,6 +605,12 @@ public:
   /// Determine whether this scope is a controlling scope in a
   /// if/switch/while/for statement.
   bool isControlScope() const { return getFlags() & Scope::ControlScope; }
+
+  /// Determine whether this scope is a type alias scope.
+  bool isTypeAliasScope() const { return getFlags() & Scope::TypeAliasScope; }
+
+  /// Determine whether this scope is a friend scope.
+  bool isFriendScope() const { return getFlags() & Scope::FriendScope; }
 
   /// Returns if rhs has a higher scope depth than this.
   ///

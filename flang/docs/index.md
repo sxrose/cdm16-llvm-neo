@@ -26,9 +26,11 @@ on how to get in touch with us and to learn more about the current status.
    C++style
    DesignGuideline
    FortranForCProgrammers
+   FortranStandardsSupport
    GettingInvolved
    GettingStarted
    ImplementingASemanticCheck
+   OpenMPSupport
    PullRequestChecklist
 ```
 
@@ -41,14 +43,17 @@ on how to get in touch with us and to learn more about the current status.
    Aliasing
    AliasingAnalysisFIR
    ArrayComposition
+   ArrayRepacking
    AssumedRank
    BijectiveInternalNameUniquing
    Calls
    Character
    ComplexOperations
    ControlFlowGraph
+   DebugGeneration
    Directives
    DoConcurrent
+   DoConcurrentConversionToOpenMP
    Extensions
    F202X
    FIRArrayOperations
@@ -80,10 +85,13 @@ on how to get in touch with us and to learn more about the current status.
    Preprocessing
    ProcedurePointer
    RuntimeDescriptor
+   RuntimeEnvironment
    RuntimeTypeInfo
    Semantics
    f2018-grammar.md
    fstack-arrays
+   Real16MathSupport
+   Unsigned
 ```
 
 # Indices and tables

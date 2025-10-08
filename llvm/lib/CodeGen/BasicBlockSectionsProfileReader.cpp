@@ -26,6 +26,7 @@
 #include "llvm/Support/LineIterator.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/Path.h"
+#include "llvm/Support/UniqueBBID.h"
 #include <llvm/ADT/STLExtras.h>
 
 using namespace llvm;
@@ -170,7 +171,7 @@ Error BasicBlockSectionsProfileReader::ReadV1Profile() {
           return false;
         // Return a match if debug-info-filename is not specified. Otherwise,
         // check for equality.
-        return DIFilename.empty() || It->second.equals(DIFilename);
+        return DIFilename.empty() || It->second == DIFilename;
       });
       if (!FunctionFound) {
         // Skip the following profile by setting the profile iterator (FI) to
@@ -317,7 +318,7 @@ Error BasicBlockSectionsProfileReader::ReadV0Profile() {
           return false;
         // Return a match if debug-info-filename is not specified. Otherwise,
         // check for equality.
-        return DIFilename.empty() || It->second.equals(DIFilename);
+        return DIFilename.empty() || It->second == DIFilename;
       });
       if (!FunctionFound) {
         // Skip the following profile by setting the profile iterator (FI) to

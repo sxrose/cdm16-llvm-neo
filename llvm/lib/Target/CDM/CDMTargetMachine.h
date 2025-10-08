@@ -4,10 +4,11 @@
 #include "CDMSubtarget.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/Target/TargetMachine.h"
+#include "llvm/CodeGen/CodeGenTargetMachineImpl.h"
 
 namespace llvm {
 
-class CDMTargetMachine : public LLVMTargetMachine {
+class CDMTargetMachine : public CodeGenTargetMachineImpl {
   std::unique_ptr<TargetLoweringObjectFile> TLOF;
   const DataLayout DataLayout;
   CDMSubtarget DefaultSubtarget;

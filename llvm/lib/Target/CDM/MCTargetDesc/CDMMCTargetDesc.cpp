@@ -74,8 +74,7 @@ static MCInstPrinter *createCDMMCInstPrinter(const Triple &T,
 
 static MCTargetStreamer *createCDMTargetAsmStreamer(MCStreamer &S,
                                                     formatted_raw_ostream &OS,
-                                                    MCInstPrinter *InstPrint,
-                                                    bool IsVerboseAsm) {
+                                                    MCInstPrinter *InstPrint) {
   return new CDMAsmTargetStreamer(S);
 }
 

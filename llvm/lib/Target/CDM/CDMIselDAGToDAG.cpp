@@ -20,11 +20,14 @@
 using namespace llvm;
 
 #define DEBUG_TYPE "cdm-isel"
+#define PASS_NAME "CDM DAG->DAG Bullshit Instruction Selection"
 
-char CDMDagToDagIsel::ID = 0;
-StringRef CDMDagToDagIsel::getPassName() const {
-  return "CDM DAG->DAG Bullshit Instruction Selection";
+char CDMDagToDagIselLegacy::ID = 0;
+
+StringRef CDMDagToDagIselLegacy::getPassName() const {
+    return PASS_NAME;
 }
+
 void CDMDagToDagIsel::Select(SDNode *N) {
 
   if (N->isMachineOpcode()) {
@@ -222,7 +225,7 @@ bool CDMDagToDagIsel::SelectAddrRR(SDValue Addr, SDValue &Base,
   return false;
 }
 
-FunctionPass *llvm::createCDMISelDag(llvm::CDMTargetMachine &TM,
-                                     CodeGenOptLevel OptLevel) {
-  return new CDMDagToDagIsel(TM);
+FunctionPass *llvm::createCDMISelDagLegacy(llvm::CDMTargetMachine &TM,
+                                           CodeGenOptLevel OptLevel) {
+  return new CDMDagToDagIselLegacy(TM, OptLevel);
 }

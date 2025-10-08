@@ -9,7 +9,7 @@
 #include "llvm/Object/DXContainer.h"
 #include "llvm/BinaryFormat/DXContainer.h"
 #include "llvm/Object/Error.h"
-#include "llvm/Support/Alignment.h"
+#include "llvm/Support/Endian.h"
 #include "llvm/Support/FormatVariadic.h"
 
 using namespace llvm;
@@ -89,6 +89,15 @@ Error DXContainer::parseHash(StringRef Part) {
   if (Error Err = readStruct(Part, Part.begin(), ReadHash))
     return Err;
   Hash = ReadHash;
+  return Error::success();
+}
+
+Error DXContainer::parseRootSignature(StringRef Part) {
+  if (RootSignature)
+    return parseFailed("More than one RTS0 part is present in the file");
+  RootSignature = DirectX::RootSignature(Part);
+  if (Error Err = RootSignature->parse())
+    return Err;
   return Error::success();
 }
 
@@ -193,6 +202,10 @@ Error DXContainer::parsePartOffsets() {
       break;
     case dxbc::PartType::Unknown:
       break;
+    case dxbc::PartType::RTS0:
+      if (Error Err = parseRootSignature(PartData))
+        return Err;
+      break;
     }
   }
 
@@ -228,6 +241,48 @@ void DXContainer::PartIterator::updateIteratorImpl(const uint32_t Offset) {
   IteratorState.Offset = Offset;
 }
 
+Error DirectX::RootSignature::parse() {
+  const char *Current = PartData.begin();
+
+  // Root Signature headers expects 6 integers to be present.
+  if (PartData.size() < 6 * sizeof(uint32_t))
+    return parseFailed(
+        "Invalid root signature, insufficient space for header.");
+
+  Version = support::endian::read<uint32_t, llvm::endianness::little>(Current);
+  Current += sizeof(uint32_t);
+
+  NumParameters =
+      support::endian::read<uint32_t, llvm::endianness::little>(Current);
+  Current += sizeof(uint32_t);
+
+  RootParametersOffset =
+      support::endian::read<uint32_t, llvm::endianness::little>(Current);
+  Current += sizeof(uint32_t);
+
+  NumStaticSamplers =
+      support::endian::read<uint32_t, llvm::endianness::little>(Current);
+  Current += sizeof(uint32_t);
+
+  StaticSamplersOffset =
+      support::endian::read<uint32_t, llvm::endianness::little>(Current);
+  Current += sizeof(uint32_t);
+
+  Flags = support::endian::read<uint32_t, llvm::endianness::little>(Current);
+  Current += sizeof(uint32_t);
+
+  ParametersHeaders.Data = PartData.substr(
+      RootParametersOffset,
+      NumParameters * sizeof(dxbc::RTS0::v1::RootParameterHeader));
+
+  StaticSamplers.Stride = sizeof(dxbc::RTS0::v1::StaticSampler);
+  StaticSamplers.Data = PartData.substr(
+      StaticSamplersOffset,
+      NumStaticSamplers * sizeof(dxbc::RTS0::v1::StaticSampler));
+
+  return Error::success();
+}
+
 Error DirectX::PSVRuntimeInfo::parse(uint16_t ShaderKind) {
   Triple::EnvironmentType ShaderStage = dxbc::getShaderStage(ShaderKind);
 
@@ -247,7 +302,14 @@ Error DirectX::PSVRuntimeInfo::parse(uint16_t ShaderKind) {
   const uint32_t PSVVersion = getVersion();
 
   // Detect the PSVVersion by looking at the size field.
-  if (PSVVersion == 2) {
+  if (PSVVersion == 3) {
+    v3::RuntimeInfo Info;
+    if (Error Err = readStruct(PSVInfoData, Current, Info))
+      return Err;
+    if (sys::IsBigEndianHost)
+      Info.swapBytes(ShaderStage);
+    BasicInfo = Info;
+  } else if (PSVVersion == 2) {
     v2::RuntimeInfo Info;
     if (Error Err = readStruct(PSVInfoData, Current, Info))
       return Err;
@@ -425,6 +487,8 @@ Error DirectX::PSVRuntimeInfo::parse(uint16_t ShaderKind) {
 }
 
 uint8_t DirectX::PSVRuntimeInfo::getSigInputCount() const {
+  if (const auto *P = std::get_if<dxbc::PSV::v3::RuntimeInfo>(&BasicInfo))
+    return P->SigInputElements;
   if (const auto *P = std::get_if<dxbc::PSV::v2::RuntimeInfo>(&BasicInfo))
     return P->SigInputElements;
   if (const auto *P = std::get_if<dxbc::PSV::v1::RuntimeInfo>(&BasicInfo))
@@ -433,6 +497,8 @@ uint8_t DirectX::PSVRuntimeInfo::getSigInputCount() const {
 }
 
 uint8_t DirectX::PSVRuntimeInfo::getSigOutputCount() const {
+  if (const auto *P = std::get_if<dxbc::PSV::v3::RuntimeInfo>(&BasicInfo))
+    return P->SigOutputElements;
   if (const auto *P = std::get_if<dxbc::PSV::v2::RuntimeInfo>(&BasicInfo))
     return P->SigOutputElements;
   if (const auto *P = std::get_if<dxbc::PSV::v1::RuntimeInfo>(&BasicInfo))
@@ -441,6 +507,8 @@ uint8_t DirectX::PSVRuntimeInfo::getSigOutputCount() const {
 }
 
 uint8_t DirectX::PSVRuntimeInfo::getSigPatchOrPrimCount() const {
+  if (const auto *P = std::get_if<dxbc::PSV::v3::RuntimeInfo>(&BasicInfo))
+    return P->SigPatchOrPrimElements;
   if (const auto *P = std::get_if<dxbc::PSV::v2::RuntimeInfo>(&BasicInfo))
     return P->SigPatchOrPrimElements;
   if (const auto *P = std::get_if<dxbc::PSV::v1::RuntimeInfo>(&BasicInfo))

@@ -12,11 +12,10 @@
 namespace llvm {
 class CDMDagToDagIsel : public SelectionDAGISel {
 public:
-  static char ID;
+  explicit CDMDagToDagIsel(CDMTargetMachine &TM,
+                           CodeGenOptLevel OL = CodeGenOptLevel::Default)
+      : SelectionDAGISel(TM, OL) {}
 
-  explicit CDMDagToDagIsel(CDMTargetMachine &TM) : SelectionDAGISel(ID, TM) {}
-
-  StringRef getPassName() const override;
   bool runOnMachineFunction(MachineFunction &MF) override;
 
 private:
@@ -34,7 +33,19 @@ private:
   bool SelectBRCOND(SDNode *N);
 };
 
-FunctionPass *createCDMISelDag(CDMTargetMachine &TM, CodeGenOptLevel OptLevel);
+class CDMDagToDagIselLegacy : public SelectionDAGISelLegacy {
+public:
+  static char ID;
+
+  StringRef getPassName() const override;
+
+  explicit CDMDagToDagIselLegacy(CDMTargetMachine &TM, CodeGenOptLevel OptLevel)
+      : SelectionDAGISelLegacy(
+            ID, std::make_unique<CDMDagToDagIsel>(TM, OptLevel)) {}
+};
+
+FunctionPass *createCDMISelDagLegacy(CDMTargetMachine &TM,
+                                     CodeGenOptLevel OptLevel);
 
 } // namespace llvm
 

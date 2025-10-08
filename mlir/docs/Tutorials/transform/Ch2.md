@@ -62,7 +62,7 @@ The operations themselves can be defined using ODS, exactly in the same way as r
 #define MY_EXTENSION
 
 include "mlir/Dialect/Transform/IR/TransformDialect.td"
-include "mlir/Dialect/Transform/IR/TransformInterfaces.td"
+include "mlir/Dialect/Transform/Interfaces/TransformInterfaces.td"
 include "mlir/IR/OpBase.td"
 include "mlir/Interfaces/SideEffectInterfaces.td"
 
@@ -124,7 +124,7 @@ This will generate two files, `MyExtension.h.inc` and `MyExtension.cpp.inc`, tha
 ```c++
 // In MyExtension.h.
 #include "mlir/Dialect/Transform/IR/TransformDialect.h"
-#include "mlir/Dialect/Transform/IR/TransformInterfaces.h"
+#include "mlir/Dialect/Transform/Interfaces/TransformInterfaces.h"
 
 #define GET_OP_CLASSES
 #include "MyExtension.h.inc"
@@ -290,12 +290,12 @@ module attributes {transform.with_named_sequence} {
   transform.named_sequence @__transform_main(
       %arg0: !transform.any_op,
       %arg1: !transform.op<"linalg.matmul">,
-      %arg2: !transform.op<"linalg.elemwise_binary">) {
+      %arg2: !transform.op<"linalg.elementwise">) {
     // Since the %arg2 handle is associated with both elementwise operations,
     // we need to split it into two handles so we can target only the second
     // elementwise operation.
     %add, %max = transform.split_handle %arg2
-        : (!transform.op<"linalg.elemwise_binary">)
+        : (!transform.op<"linalg.elementwise">)
         -> (!transform.any_op, !transform.any_op)
 
     // The actual tiling transformation takes tile sizes as attributes. It

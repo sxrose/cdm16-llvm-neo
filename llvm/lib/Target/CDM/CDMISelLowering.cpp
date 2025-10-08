@@ -217,7 +217,7 @@ CDMISelLowering::LowerReturn(SDValue Chain, CallingConv::ID CallConv,
 
 bool CDMISelLowering::CanLowerReturn(
     CallingConv::ID CallingConv, MachineFunction &MF, bool IsVarArg,
-    const SmallVectorImpl<ISD::OutputArg> &Outs, LLVMContext &Context) const {
+    const SmallVectorImpl<ISD::OutputArg> &Outs, LLVMContext &Context, const Type *RetTy) const {
   SmallVector<CCValAssign, 16> RVLocs;
   CCState CCInfo(CallingConv, IsVarArg, MF, RVLocs, Context);
   return CCInfo.CheckReturn(Outs, RetCC_CDM);
@@ -281,6 +281,7 @@ SDValue CDMISelLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
       Chain = DAG.getMemcpy(Chain, Loc, FIPtr, Arg, SizeNode, Alignment,
                             false,        // isVolatile,
                             (Size <= 16), // AlwaysInline if size <= 16,
+                            nullptr,
                             false,        // isTailCall
                             MachinePointerInfo(), MachinePointerInfo());
       ByValArgs.push_back(FIPtr);

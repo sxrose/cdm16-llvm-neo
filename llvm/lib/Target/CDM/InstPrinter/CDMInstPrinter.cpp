@@ -6,6 +6,7 @@
 #include <map>
 
 #include "llvm/ADT/StringExtras.h"
+#include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCInstrInfo.h"
@@ -39,8 +40,7 @@ void CDMInstPrinter::printOperand(const MCInst *MI, unsigned int OpNo,
     return;
   }
   if (Op.isExpr()) {
-    Op.getExpr()->print(O, &MAI, false);
-    //    O << Op.getExpr()->dump();
+    MAI.printExpr(O, *Op.getExpr());
     return;
   }
 
@@ -55,7 +55,7 @@ void CDMInstPrinter::printMemOperand(const MCInst *MI, unsigned int OpNo,
   }
   printOperand(MI, OpNo, O);
 }
-void CDMInstPrinter::printRegName(raw_ostream &OS, MCRegister Reg) const {
+void CDMInstPrinter::printRegName(raw_ostream &OS, MCRegister Reg) {
   OS << StringRef(const_cast<CDMInstPrinter *>(this)->getRegisterName(Reg));
 }
 void CDMInstPrinter::printCondCode(const MCInst *MI, unsigned int OpNo,

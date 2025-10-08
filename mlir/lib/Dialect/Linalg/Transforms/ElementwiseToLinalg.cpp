@@ -8,7 +8,6 @@
 
 #include "mlir/Dialect/Linalg/Passes.h"
 
-#include "mlir/Dialect/Arith/Utils/Utils.h"
 #include "mlir/Dialect/Linalg/IR/Linalg.h"
 #include "mlir/Dialect/Linalg/Transforms/Transforms.h"
 #include "mlir/Dialect/Linalg/Utils/Utils.h"
@@ -27,8 +26,7 @@ static bool isElementwiseMappableOpOnRankedTensors(Operation *op) {
 
   // TODO: The conversion pattern can be made to work for `any_of` here, but
   // it's more complex as it requires tracking which operands are scalars.
-  return llvm::all_of(op->getOperandTypes(),
-                      [](Type type) { return isa<RankedTensorType>(type); });
+  return llvm::all_of(op->getOperandTypes(), llvm::IsaPred<RankedTensorType>);
 }
 
 /// Given `op` assumed `isElementwiseMappableOpOnRankedTensors`, iterate over

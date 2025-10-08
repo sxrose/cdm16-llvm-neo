@@ -215,7 +215,7 @@ void CDMAsmTargetStreamer::emitLabel(MCSymbol *Symbol) {}
 
 void CDMAsmTargetStreamer::changeSection(const MCSection *CurSection,
                                          MCSection *Section,
-                                         const MCExpr *SubSection,
+                                         uint32_t SubSection,
                                          raw_ostream &OS) {
   // This is a stub. We don't have sections in cdm
   // Section->

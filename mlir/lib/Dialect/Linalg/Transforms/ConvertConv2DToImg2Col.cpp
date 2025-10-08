@@ -19,7 +19,6 @@
 #include "mlir/IR/Builders.h"
 #include "mlir/IR/BuiltinAttributes.h"
 #include "mlir/IR/BuiltinTypes.h"
-#include "mlir/Transforms/GreedyPatternRewriteDriver.h"
 #include <utility>
 
 namespace mlir {
@@ -349,7 +348,7 @@ rewriteInIm2Col(RewriterBase &rewriter,
   SmallVector<ReassociationIndices> batchMatVecReassociationIndice = {{0, 1},
                                                                       {2, 3}};
 
-  Value batchMatVecResultReshaped = rewriter.create<tensor::ExpandShapeOp>(
+  auto batchMatVecResultReshaped = rewriter.create<tensor::ExpandShapeOp>(
       loc, transposedOutputTensor.getType(), batchMatVecResult.getResult(0),
       batchMatVecReassociationIndice);
 

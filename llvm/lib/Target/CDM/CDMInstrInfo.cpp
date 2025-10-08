@@ -22,7 +22,8 @@ void CDMInstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
                                        Register SrcReg, bool IsKill, int FI,
                                        const TargetRegisterClass *RC,
                                        const TargetRegisterInfo *TRI,
-                                       Register VReg) const {
+                                       Register VReg,
+                                       MachineInstr::MIFlag Flags) const {
   DebugLoc DL;
   MachineMemOperand *MMO = GetMemOperand(MBB, FI, MachineMemOperand::MOStore);
 
@@ -50,7 +51,8 @@ void CDMInstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
                                         Register DestReg, int FrameIndex,
                                         const TargetRegisterClass *RC,
                                         const TargetRegisterInfo *TRI,
-                                        Register VReg) const {
+                                        Register VReg,
+                                        MachineInstr::MIFlag Flags) const {
   DebugLoc DL;
   if (MI != MBB.end())
     DL = MI->getDebugLoc();
@@ -87,9 +89,10 @@ void CDMInstrInfo::expandRet(MachineBasicBlock &MBB,
 }
 
 void CDMInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
-                               MachineBasicBlock::iterator MI,
-                               const DebugLoc &DL, MCRegister DestReg,
-                               MCRegister SrcReg, bool KillSrc) const {
+                           MachineBasicBlock::iterator MI, const DebugLoc &DL,
+                           Register DestReg, Register SrcReg, bool KillSrc,
+                           bool RenamableDest,
+                           bool RenamableSrc) const {
   //  TargetInstrInfo::copyPhysReg(MBB, MI, DL, DestReg, SrcReg, KillSrc);
   if (SrcReg == CDM::SP) {
     MachineInstrBuilder MIB = BuildMI(MBB, MI, DL, get(CDM::LDSP));

@@ -45,7 +45,7 @@ public:
   bool CanLowerReturn(CallingConv::ID CallingConv, MachineFunction &MF,
                       bool IsVarArg,
                       const SmallVectorImpl<ISD::OutputArg> &Outs,
-                      LLVMContext &Context) const override;
+                      LLVMContext &Context, const Type *RetTy) const override;
   const char *getTargetNodeName(unsigned int Opcode) const override;
   SDValue LowerCall(CallLoweringInfo &CLI,
                     SmallVectorImpl<SDValue> &InVals) const override;

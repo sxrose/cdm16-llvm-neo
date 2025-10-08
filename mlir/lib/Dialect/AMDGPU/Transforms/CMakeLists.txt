@@ -1,7 +1,7 @@
 add_mlir_dialect_library(MLIRAMDGPUTransforms
   EmulateAtomics.cpp
-  OptimizeSharedMemory.cpp
-  Utils.cpp
+  ResolveStridedMetadata.cpp
+  MaskedloadToLoad.cpp
 
   ADDITIONAL_HEADER_DIRS
   {$MLIR_MAIN_INCLUDE_DIR}/mlir/Dialect/AMDGPU/Transforms
@@ -13,11 +13,13 @@ add_mlir_dialect_library(MLIRAMDGPUTransforms
   MLIRAMDGPUDialect
   MLIRAMDGPUUtils
   MLIRArithDialect
+  MLIRMemRefDialect
+  MLIRSCFDialect
+  MLIRVectorDialect
   MLIRControlFlowDialect
   MLIRFuncDialect
   MLIRIR
   MLIRPass
   MLIRTransforms
   MLIRTransformUtils
-  MLIRVectorDialect
   )
