@@ -1748,8 +1748,9 @@ void RegAllocFastImpl::handleDebugValue(MachineInstr &MI) {
 
 void RegAllocFastImpl::handleBundle(MachineInstr &MI) {
   MachineBasicBlock::instr_iterator BundledMI = MI.getIterator();
+  MachineBasicBlock::instr_iterator EndOfBlock = MI.getParent()->instr_end();
   ++BundledMI;
-  while (BundledMI->isBundledWithPred()) {
+  while (BundledMI != EndOfBlock && BundledMI->isBundledWithPred()) {
     for (MachineOperand &MO : BundledMI->operands()) {
       if (!MO.isReg())
         continue;
