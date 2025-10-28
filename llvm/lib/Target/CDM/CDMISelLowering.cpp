@@ -456,9 +456,38 @@ MachineBasicBlock *
 CDMISelLowering::EmitInstrWithCustomInserter(MachineInstr &MI,
                                              MachineBasicBlock *MBB) const {
 
-  assert(MI.getOpcode() == CDM::PseudoSelectCC &&
-         "Unexpected instr type to insert");
+  switch (MI.getOpcode()){
+	  default:
+		llvm_unreachable("Unexpected instr type to insert");
+	  case CDM::PseudoSelectCC:
+	  case CDM::PseudoSelectCCI:
+		return EmitPseudoSelectCC(MI, MBB);
+	  case CDM::PseudoBCondRR:
+	  case CDM::PseudoBCondRI:
+		return EmitPseudoBCond(MI, MBB);
+  }
 
+}
+
+SDValue CDMISelLowering::lowerVASTART(SDValue Op, SelectionDAG &DAG) const {
+  MachineFunction &MF = DAG.getMachineFunction();
+  CDMFunctionInfo *FuncInfo = MF.getInfo<CDMFunctionInfo>();
+
+  SDLoc DL(Op);
+  SDValue FI = DAG.getFrameIndex(FuncInfo->getVarArgsFrameIndex(),
+                                 getPointerTy(DAG.getDataLayout()));
+
+  // vastart just stores the address of the VarArgsFrameIndex slot into the
+  // memory location argument.
+  const Value *SV = cast<SrcValueSDNode>(Op.getOperand(2))->getValue();
+  return DAG.getStore(Op.getOperand(0), DL, FI, Op.getOperand(1),
+                      MachinePointerInfo(SV));
+}
+
+
+MachineBasicBlock*
+CDMISelLowering::EmitPseudoSelectCC(MachineInstr &MI,
+				    MachineBasicBlock *MBB) const {
   const CDMInstrInfo &TII =
       *(const CDMInstrInfo *)MBB->getParent()->getSubtarget().getInstrInfo();
   DebugLoc DL = MI.getDebugLoc();
@@ -490,14 +519,23 @@ CDMISelLowering::EmitInstrWithCustomInserter(MachineInstr &MI,
   HeadMBB->addSuccessor(TailMBB);
   IfFalseMBB->addSuccessor(TailMBB);
 
-  // TODO: check if glue needed
-  BuildMI(HeadMBB, DL, TII.get(CDM::CMP))
-      .addReg(LHS.getReg())
-      .addReg(RHS.getReg());
+  MachineInstr *branch;
+  if (MI.getOpcode() == CDM::PseudoSelectCC){
+	  branch = BuildMI(HeadMBB, DL, TII.get(CDM::PseudoBCondRR))
+					.addImm(TII.CCToCondOp(CondCode))
+					.addReg(LHS.getReg())
+					.addReg(RHS.getReg())
+					.addMBB(TailMBB);
+  }
+  else{
+	  branch = BuildMI(HeadMBB, DL, TII.get(CDM::PseudoBCondRI))
+					.addImm(TII.CCToCondOp(CondCode))
+					.addReg(LHS.getReg())
+					.addImm(RHS.getImm())
+					.addMBB(TailMBB);
+  }
 
-  BuildMI(HeadMBB, DL, TII.get(CDM::BCond))
-      .addImm(TII.CCToCondOp(CondCode))
-      .addMBB(TailMBB);
+  EmitPseudoBCond(*branch, HeadMBB);
 
   BuildMI(*TailMBB, TailMBB->begin(), DL, TII.get(CDM::PHI), Dst.getReg())
       .addReg(TrueVal.getReg())
@@ -510,17 +548,41 @@ CDMISelLowering::EmitInstrWithCustomInserter(MachineInstr &MI,
   return TailMBB;
 }
 
-SDValue CDMISelLowering::lowerVASTART(SDValue Op, SelectionDAG &DAG) const {
-  MachineFunction &MF = DAG.getMachineFunction();
-  CDMFunctionInfo *FuncInfo = MF.getInfo<CDMFunctionInfo>();
+MachineBasicBlock*
+CDMISelLowering::EmitPseudoBCond(MachineInstr &MI,
+				 MachineBasicBlock *MBB) const {
 
-  SDLoc DL(Op);
-  SDValue FI = DAG.getFrameIndex(FuncInfo->getVarArgsFrameIndex(),
-                                 getPointerTy(DAG.getDataLayout()));
+  const CDMInstrInfo &TII =
+      *(const CDMInstrInfo *)MBB->getParent()->getSubtarget().getInstrInfo();
+  DebugLoc DL = MI.getDebugLoc();
 
-  // vastart just stores the address of the VarArgsFrameIndex slot into the
-  // memory location argument.
-  const Value *SV = cast<SrcValueSDNode>(Op.getOperand(2))->getValue();
-  return DAG.getStore(Op.getOperand(0), DL, FI, Op.getOperand(1),
-                      MachinePointerInfo(SV));
+  auto CondCode = static_cast<CDMCOND::CondOp>(MI.getOperand(0).getImm());
+  auto LHS = MI.getOperand(1);
+  auto RHS = MI.getOperand(2);
+  auto Target = MI.getOperand(3);
+
+  // TODO: Implement optimizations
+
+  MIBundleBuilder Bundler = MIBundleBuilder(*MBB, MI); 
+
+  if (MI.getOpcode() == CDM::PseudoBCondRR){
+	  Bundler.append(BuildMI(*MBB->getParent(), DL, TII.get(CDM::CMP))
+				.addReg(LHS.getReg())
+				.addReg(RHS.getReg()));
+  }
+  else{
+	  Bundler.append(BuildMI(*MBB->getParent(), DL, TII.get(CDM::CMPI))
+				.addReg(LHS.getReg())
+				.addImm(RHS.getImm()));
+  }
+
+  Bundler.append(BuildMI(*MBB->getParent(), DL, TII.get(CDM::BCond))
+		  	.addImm(CondCode)
+			.addMBB(Target.getMBB()));
+
+  finalizeBundle(*MBB, Bundler.begin(), Bundler.end());
+
+  MI.eraseFromParent();
+
+  return MBB;
 }
