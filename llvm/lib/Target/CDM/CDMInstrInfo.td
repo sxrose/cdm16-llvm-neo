@@ -323,16 +323,11 @@ def cond_as_i16imm : SDNodeXForm<cond, [{
 }]>;
 
 def PseudoSelectCC
-    : CDMInst<(outs CPURegs:$dst),
+    : CDMPseudo<(outs CPURegs:$dst),
               (ins CPURegs:$lhs, CPURegs:$rhs, CPURegs:$vtrue, CPURegs:$vfalse,
                   cond_val:$cnd),
               "",
-              [
-                  // (set CPURegs:$dst, (selectcc CPURegs:$lhs, CPURegs:$rhs,
-                  // CPURegs:$vtrue, CPURegs:$vfalse, (cond_as_i16imm
-                  // cond:$cnd)))
-]> {
-  let isPseudo = true;
+              []> {
   let usesCustomInserter = true;
 }
 
