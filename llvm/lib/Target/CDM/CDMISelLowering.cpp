@@ -36,6 +36,7 @@ CDMISelLowering::CDMISelLowering(const CDMTargetMachine &TM,
 
   //          setOperationAction(ISD::SELECT_CC, MVT::i16, Expand);
   setOperationAction(ISD::SELECT, MVT::i16, Expand);
+  setOperationAction(ISD::BRCOND, MVT::Other, Expand);
   setOperationAction(ISD::SETCC, MVT::i16, Expand);
   //          setOperationAction(ISD::SELECT_CC, MVT::i16, Custom);
 

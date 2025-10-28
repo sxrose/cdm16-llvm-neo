@@ -42,10 +42,6 @@ void CDMDagToDagIsel::Select(SDNode *N) {
     SelectConditionalBranch(N);
     return;
   }
-  if (N->getOpcode() == ISD::BRCOND) {
-    SelectBRCOND(N);
-    return;
-  }
 
   if (N->getOpcode() == CDMISD::Call) {
     // Generate JSRR if needed, otherwise fall to

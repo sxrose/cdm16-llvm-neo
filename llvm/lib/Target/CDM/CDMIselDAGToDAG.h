@@ -30,7 +30,6 @@ private:
 
   bool trySelectPointerCall(SDNode *N);
   bool SelectConditionalBranch(SDNode *N);
-  bool SelectBRCOND(SDNode *N);
 };
 
 class CDMDagToDagIselLegacy : public SelectionDAGISelLegacy {
