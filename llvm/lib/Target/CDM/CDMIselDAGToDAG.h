@@ -30,6 +30,9 @@ private:
 
   bool trySelectPointerCall(SDNode *N);
   bool SelectConditionalBranch(SDNode *N);
+
+  bool isImm6(SDValue& V);
+  const APInt& getSDValueAsAPInt(SDValue& V); 
 };
 
 class CDMDagToDagIselLegacy : public SelectionDAGISelLegacy {

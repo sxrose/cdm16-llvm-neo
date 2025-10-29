@@ -159,10 +159,8 @@ bool CDMDagToDagIsel::SelectConditionalBranch(SDNode *N) {
   SDValue CCVal = CurDAG->getTargetConstant(CondMap[CC->get()], N, MVT::i32);
 
   // If right operand is imm6
-  ConstantSDNode *Const = dyn_cast<ConstantSDNode>(RHS);
-  int64_t ConstVal = Const == nullptr ? 0 : Const->getConstantIntValue()->getSExtValue();
-  if (Const != nullptr && ConstVal >= -64 && ConstVal <= 63){
-	  SDValue PseudoBranchOps[] = {CCVal, LHS, CurDAG->getTargetConstant(ConstVal, N, MVT::i16), Target, Chain};
+  if (isImm6(RHS)){
+	  SDValue PseudoBranchOps[] = {CCVal, LHS, CurDAG->getTargetConstant(getSDValueAsAPInt(RHS), N, MVT::i16), Target, Chain};
 	  CurDAG->SelectNodeTo(N, CDM::PseudoBCondRI, MVT::Other, PseudoBranchOps);
   }
   else{
@@ -208,4 +206,26 @@ bool CDMDagToDagIsel::SelectAddrRR(SDValue Addr, SDValue &Base,
 FunctionPass *llvm::createCDMISelDagLegacy(llvm::CDMTargetMachine &TM,
                                            CodeGenOptLevel OptLevel) {
   return new CDMDagToDagIselLegacy(TM, OptLevel);
+}
+
+bool CDMDagToDagIsel::isImm6(SDValue& V) {
+  ConstantSDNode *Const = dyn_cast<ConstantSDNode>(V);
+
+  if (Const == nullptr){
+    return false;
+  }
+
+  APInt constant = Const->getAPIntValue();
+
+  return constant.sge(-64) && constant.sle(63);
+}
+
+const APInt& CDMDagToDagIsel::getSDValueAsAPInt(SDValue& V) {
+  ConstantSDNode *Const = dyn_cast<ConstantSDNode>(V);
+
+  if (Const == nullptr){
+    llvm_unreachable("Tried to get imm6 value from SDValue which isn't Constant");
+  }
+
+  return Const->getAPIntValue();
 }
