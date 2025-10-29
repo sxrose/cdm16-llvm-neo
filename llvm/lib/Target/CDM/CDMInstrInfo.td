@@ -420,7 +420,7 @@ let Defs = [SP], Uses = [SP] in {
 
 // TODO: convert to ArithLogic ???
 def MOVE
-    : CDMInst<(outs CPURegs:$rd), (ins CPURegs:$rs), "movens\t$rs, $rd", []> {
+    : CDMInst<(outs CPURegs:$rd), (ins CPURegs:$rs), "move\t$rs, $rd", []> {
   // let Defs = [PSR];
 }
 

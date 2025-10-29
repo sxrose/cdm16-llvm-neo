@@ -205,8 +205,6 @@ void CDMAsmPrinter::emitStartOfAsmFile(Module &Module) {
   //   OutStreamer->emitRawText(formatv("{0}: ext\n", ExternalSymbolName));
   // }
 
-  // TODO: this is a fake move. Remove this when actual movens is implemented
-  OutStreamer->emitRawText("\n\nmacro movens/2\npush $1\npop $2\nmend\n\n");
 }
 
 void CDMAsmPrinter::emitEndOfAsmFile(Module &Module) {
