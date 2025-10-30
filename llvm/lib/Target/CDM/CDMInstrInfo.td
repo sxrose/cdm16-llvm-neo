@@ -311,16 +311,16 @@ def stpc
 
 def cond_val : Operand<OtherVT> { let PrintMethod = "printCondCode"; }
 
+def cdmize_cond : SDNodeXForm<cond, [{
+  return CurDAG->getTargetConstant(CCToCondOp(N->get()), N, MVT::i16);
+}]>;
+
 def BCond : CDMInst<(outs), (ins cond_val:$cond, brtarget:$addr),
                     "b$cond\t$addr", []> {
   let isTerminator = 1;
   let isBranch = 1;
   let Uses = [PSR];
 }
-
-def cond_as_i16imm : SDNodeXForm<cond, [{
-  return CurDAG->getTargetConstant(N->get(), SDLoc(N), MVT::i16);
-}]>;
 
 def PseudoSelectCC
     : CDMPseudo<(outs CPURegs:$dst),
@@ -343,12 +343,12 @@ def PseudoSelectCCI
 def : Pat<(selectcc CPURegs:$lhs, immZext6:$rhs, CPURegs:$vtrue, CPURegs:$vfalse,
               cond:$cnd),
           (PseudoSelectCCI CPURegs:$lhs, immZext6:$rhs, CPURegs:$vtrue,
-              CPURegs:$vfalse, (cond_as_i16imm $cnd))>;
+              CPURegs:$vfalse, (cdmize_cond $cnd))>;
 
 def : Pat<(selectcc CPURegs:$lhs, CPURegs:$rhs, CPURegs:$vtrue, CPURegs:$vfalse,
               cond:$cnd),
           (PseudoSelectCC CPURegs:$lhs, CPURegs:$rhs, CPURegs:$vtrue,
-              CPURegs:$vfalse, (cond_as_i16imm $cnd))>;
+              CPURegs:$vfalse, (cdmize_cond $cnd))>;
 
 def PseudoBCondRR : CDMPseudo<(outs), (ins cond_val:$cnd, CPURegs:$lhs, CPURegs:$rhs, brtarget:$addr), "", []>{
   let isTerminator = 1;
@@ -363,6 +363,12 @@ def PseudoBCondRI : CDMPseudo<(outs), (ins cond_val:$cnd, CPURegs:$lhs, i16imm:$
   let Uses = [PSR];
   let usesCustomInserter = true;
 }
+
+def : Pat<(brcc cond:$cnd, CPURegs:$lhs, immZext6:$rhs, bb:$target),
+          (PseudoBCondRI (cdmize_cond $cnd), CPURegs:$lhs, immZext6:$rhs, brtarget:$target)>;
+
+def : Pat<(brcc cond:$cnd, CPURegs:$lhs, CPURegs:$rhs, bb:$target),
+          (PseudoBCondRR (cdmize_cond $cnd), CPURegs:$lhs, CPURegs:$rhs, brtarget:$target)>;
 
 def CMP : CDMInst<(outs), (ins CPURegs:$ra, CPURegs:$rb), "cmp\t$ra, $rb", []> {
   let Defs = [PSR];

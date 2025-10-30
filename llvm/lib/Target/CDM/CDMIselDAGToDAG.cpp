@@ -38,11 +38,6 @@ void CDMDagToDagIsel::Select(SDNode *N) {
     return;
   }
 
-  if (N->getOpcode() == ISD::BR_CC) {
-    SelectConditionalBranch(N);
-    return;
-  }
-
   if (N->getOpcode() == CDMISD::Call) {
     // Generate JSRR if needed, otherwise fall to
     // default tablegen pattern matching
@@ -120,53 +115,6 @@ bool CDMDagToDagIsel::trySelectPointerCall(SDNode *N) {
   }
 
   CurDAG->SelectNodeTo(N, CDM::JSRR, MVT::Other, MVT::Glue, Operands);
-
-  return true;
-}
-
-// This is manual solution
-// Until I figure out how to use tablegen for this
-// TODO: !important! use tablegen for branches
-bool CDMDagToDagIsel::SelectConditionalBranch(SDNode *N) {
-  SDValue Chain = N->getOperand(0);
-  SDValue Cond = N->getOperand(1);
-  SDValue LHS = N->getOperand(2);
-  SDValue RHS = N->getOperand(3);
-  SDValue Target = N->getOperand(4);
-
-  CondCodeSDNode *CC = cast<CondCodeSDNode>(Cond.getNode());
-
-  // TODO: deduplicate this map
-  std::map<ISD::CondCode, CDMCOND::CondOp> CondMap = {
-      {ISD::CondCode::SETLT, CDMCOND::LT},
-      {ISD::CondCode::SETLE, CDMCOND::LE},
-      {ISD::CondCode::SETGT, CDMCOND::GT},
-      {ISD::CondCode::SETGE, CDMCOND::GE},
-      {ISD::CondCode::SETULT, CDMCOND::LO},
-      {ISD::CondCode::SETULE, CDMCOND::LS},
-      {ISD::CondCode::SETUGT, CDMCOND::HI},
-      {ISD::CondCode::SETUGE, CDMCOND::HS},
-      {ISD::CondCode::SETEQ, CDMCOND::EQ},
-      {ISD::CondCode::SETNE, CDMCOND::NE},
-  };
-
-  if (!CondMap.count(CC->get())) {
-    LLVM_DEBUG(errs() << "Unknown branch condition");
-    return false;
-  }
-
-  // TODO: long compare???
-  SDValue CCVal = CurDAG->getTargetConstant(CondMap[CC->get()], N, MVT::i32);
-
-  // If right operand is imm6
-  if (isImm6(RHS)){
-	  SDValue PseudoBranchOps[] = {CCVal, LHS, CurDAG->getTargetConstant(getSDValueAsAPInt(RHS), N, MVT::i16), Target, Chain};
-	  CurDAG->SelectNodeTo(N, CDM::PseudoBCondRI, MVT::Other, PseudoBranchOps);
-  }
-  else{
-	  SDValue PseudoBranchOps[] = {CCVal, LHS, RHS, Target, Chain};
-	  CurDAG->SelectNodeTo(N, CDM::PseudoBCondRR, MVT::Other, PseudoBranchOps);
-  }
 
   return true;
 }

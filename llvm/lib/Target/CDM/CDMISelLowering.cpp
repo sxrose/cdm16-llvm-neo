@@ -497,7 +497,7 @@ CDMISelLowering::emitPseudoSelectCC(MachineInstr &MI,
   auto RHS = MI.getOperand(2);
   auto TrueVal = MI.getOperand(3);
   auto FalseVal = MI.getOperand(4);
-  auto CondCode = static_cast<ISD::CondCode>(MI.getOperand(5).getImm());
+  auto CondCode = static_cast<CDMCOND::CondOp>(MI.getOperand(5).getImm());
 
   const BasicBlock *LLVM_BB = MBB->getBasicBlock();
 
@@ -522,14 +522,14 @@ CDMISelLowering::emitPseudoSelectCC(MachineInstr &MI,
   MachineInstr *branch;
   if (MI.getOpcode() == CDM::PseudoSelectCC){
 	  branch = BuildMI(HeadMBB, DL, TII.get(CDM::PseudoBCondRR))
-					.addImm(TII.CCToCondOp(CondCode))
+					.addImm(CondCode)
 					.addReg(LHS.getReg())
 					.addReg(RHS.getReg())
 					.addMBB(TailMBB);
   }
   else{
 	  branch = BuildMI(HeadMBB, DL, TII.get(CDM::PseudoBCondRI))
-					.addImm(TII.CCToCondOp(CondCode))
+					.addImm(CondCode)
 					.addReg(LHS.getReg())
 					.addImm(RHS.getImm())
 					.addMBB(TailMBB);

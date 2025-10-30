@@ -5,7 +5,9 @@
 #ifndef LLVM_CDMISELDAGTODAG_H
 #define LLVM_CDMISELDAGTODAG_H
 
+#include <map>
 #include "CDMTargetMachine.h"
+#include "CDMInstrInfo.h"
 
 #include "llvm/CodeGen/SelectionDAGISel.h"
 
@@ -21,6 +23,19 @@ public:
 private:
 #include "CDMGenDAGISel.inc"
 
+  std::map<ISD::CondCode, CDMCOND::CondOp> CondMap = {
+      {ISD::CondCode::SETLT, CDMCOND::LT},
+      {ISD::CondCode::SETLE, CDMCOND::LE},
+      {ISD::CondCode::SETGT, CDMCOND::GT},
+      {ISD::CondCode::SETGE, CDMCOND::GE},
+      {ISD::CondCode::SETULT, CDMCOND::LO},
+      {ISD::CondCode::SETULE, CDMCOND::LS},
+      {ISD::CondCode::SETUGT, CDMCOND::HI},
+      {ISD::CondCode::SETUGE, CDMCOND::HS},
+      {ISD::CondCode::SETEQ, CDMCOND::EQ},
+      {ISD::CondCode::SETNE, CDMCOND::NE},
+  };
+
   void Select(SDNode *N) override;
   bool trySelect(SDNode *Node);
   bool SelectAddrFrameIndex(SDNode *Parent, SDValue Addr, SDValue &Base,
@@ -33,6 +48,13 @@ private:
 
   bool isImm6(SDValue& V);
   const APInt& getSDValueAsAPInt(SDValue& V); 
+
+  CDMCOND::CondOp CCToCondOp(ISD::CondCode CC) const {
+    if (!CondMap.count(CC)) {
+      llvm_unreachable("Unknown branch condition");
+    }
+    return CondMap.at(CC);
+  }
 };
 
 class CDMDagToDagIselLegacy : public SelectionDAGISelLegacy {

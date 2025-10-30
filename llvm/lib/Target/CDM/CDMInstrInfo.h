@@ -7,7 +7,6 @@
 
 #include "CDMRegisterInfo.h"
 #include "llvm/CodeGen/TargetInstrInfo.h"
-#include <map>
 
 #define GET_INSTRINFO_HEADER
 #include "CDMGenInstrInfo.inc"
@@ -65,26 +64,7 @@ public:
   void adjustStackPtr(int64_t Amount, MachineBasicBlock &MBB,
                       MachineBasicBlock::iterator I, const DebugLoc &DL) const;
 
-  CDMCOND::CondOp CCToCondOp(ISD::CondCode CC) const {
-    if (!CondMap.count(CC)) {
-      llvm_unreachable("Unknown branch condition");
-    }
-    return CondMap.at(CC);
-  }
-
 private:
-  std::map<ISD::CondCode, CDMCOND::CondOp> CondMap = {
-      {ISD::CondCode::SETLT, CDMCOND::LT},
-      {ISD::CondCode::SETLE, CDMCOND::LE},
-      {ISD::CondCode::SETGT, CDMCOND::GT},
-      {ISD::CondCode::SETGE, CDMCOND::GE},
-      {ISD::CondCode::SETULT, CDMCOND::LO},
-      {ISD::CondCode::SETULE, CDMCOND::LS},
-      {ISD::CondCode::SETUGT, CDMCOND::HI},
-      {ISD::CondCode::SETUGE, CDMCOND::HS},
-      {ISD::CondCode::SETEQ, CDMCOND::EQ},
-      {ISD::CondCode::SETNE, CDMCOND::NE},
-  };
   const CDMRegisterInfo RI;
 
   MachineMemOperand *GetMemOperand(MachineBasicBlock &MBB, int FI,
