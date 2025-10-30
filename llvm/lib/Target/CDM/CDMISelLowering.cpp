@@ -461,10 +461,10 @@ CDMISelLowering::EmitInstrWithCustomInserter(MachineInstr &MI,
 		llvm_unreachable("Unexpected instr type to insert");
 	  case CDM::PseudoSelectCC:
 	  case CDM::PseudoSelectCCI:
-		return EmitPseudoSelectCC(MI, MBB);
+		return emitPseudoSelectCC(MI, MBB);
 	  case CDM::PseudoBCondRR:
 	  case CDM::PseudoBCondRI:
-		return EmitPseudoBCond(MI, MBB);
+		return emitPseudoBCond(MI, MBB);
   }
 
 }
@@ -486,7 +486,7 @@ SDValue CDMISelLowering::lowerVASTART(SDValue Op, SelectionDAG &DAG) const {
 
 
 MachineBasicBlock*
-CDMISelLowering::EmitPseudoSelectCC(MachineInstr &MI,
+CDMISelLowering::emitPseudoSelectCC(MachineInstr &MI,
 				    MachineBasicBlock *MBB) const {
   const CDMInstrInfo &TII =
       *(const CDMInstrInfo *)MBB->getParent()->getSubtarget().getInstrInfo();
@@ -535,7 +535,7 @@ CDMISelLowering::EmitPseudoSelectCC(MachineInstr &MI,
 					.addMBB(TailMBB);
   }
 
-  EmitPseudoBCond(*branch, HeadMBB);
+  emitPseudoBCond(*branch, HeadMBB);
 
   BuildMI(*TailMBB, TailMBB->begin(), DL, TII.get(CDM::PHI), Dst.getReg())
       .addReg(TrueVal.getReg())
@@ -549,7 +549,7 @@ CDMISelLowering::EmitPseudoSelectCC(MachineInstr &MI,
 }
 
 MachineBasicBlock*
-CDMISelLowering::EmitPseudoBCond(MachineInstr &MI,
+CDMISelLowering::emitPseudoBCond(MachineInstr &MI,
 				 MachineBasicBlock *MBB) const {
 
   const CDMInstrInfo &TII =
