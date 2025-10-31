@@ -354,14 +354,12 @@ def PseudoBCondRR : CDMPseudo<(outs), (ins cond_val:$cnd, CPURegs:$lhs, CPURegs:
   let isTerminator = 1;
   let isBranch = 1;
   let Uses = [PSR];
-  let usesCustomInserter = true;
 }
 
 def PseudoBCondRI : CDMPseudo<(outs), (ins cond_val:$cnd, CPURegs:$lhs, i16imm:$rhs, brtarget:$addr), "", []>{
   let isTerminator = 1;
   let isBranch = 1;
   let Uses = [PSR];
-  let usesCustomInserter = true;
 }
 
 def : Pat<(brcc cond:$cnd, CPURegs:$lhs, immZext6:$rhs, bb:$target),

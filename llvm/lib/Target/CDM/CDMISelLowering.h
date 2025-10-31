@@ -67,8 +67,6 @@ private:
 
   MachineBasicBlock* emitPseudoSelectCC(MachineInstr &MI,
 		  			MachineBasicBlock *MBB) const;
-  MachineBasicBlock* emitPseudoBCond(MachineInstr &MI,
-		  			MachineBasicBlock *MBB) const;
 
   const CDMSubtarget &Subtarget;
   const unsigned StackReserved = 4 * 2u;

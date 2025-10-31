@@ -69,7 +69,8 @@ private:
 
   MachineMemOperand *GetMemOperand(MachineBasicBlock &MBB, int FI,
                                    MachineMemOperand::Flags Flags) const;
-  void expandRet(MachineBasicBlock &MBB, MachineBasicBlock::iterator I) const;
+  void expandRet(MachineBasicBlock &MBB, MachineInstr &MI) const;
+  void expandBCond(MachineBasicBlock &MBB, MachineInstr &MI) const;
 };
 
 } // namespace llvm

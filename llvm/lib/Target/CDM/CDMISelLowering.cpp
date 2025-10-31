@@ -462,9 +462,6 @@ CDMISelLowering::EmitInstrWithCustomInserter(MachineInstr &MI,
 	  case CDM::PseudoSelectCC:
 	  case CDM::PseudoSelectCCI:
 		return emitPseudoSelectCC(MI, MBB);
-	  case CDM::PseudoBCondRR:
-	  case CDM::PseudoBCondRI:
-		return emitPseudoBCond(MI, MBB);
   }
 
 }
@@ -519,23 +516,20 @@ CDMISelLowering::emitPseudoSelectCC(MachineInstr &MI,
   HeadMBB->addSuccessor(TailMBB);
   IfFalseMBB->addSuccessor(TailMBB);
 
-  MachineInstr *branch;
   if (MI.getOpcode() == CDM::PseudoSelectCC){
-	  branch = BuildMI(HeadMBB, DL, TII.get(CDM::PseudoBCondRR))
+	  BuildMI(HeadMBB, DL, TII.get(CDM::PseudoBCondRR))
 					.addImm(CondCode)
 					.addReg(LHS.getReg())
 					.addReg(RHS.getReg())
 					.addMBB(TailMBB);
   }
   else{
-	  branch = BuildMI(HeadMBB, DL, TII.get(CDM::PseudoBCondRI))
+	  BuildMI(HeadMBB, DL, TII.get(CDM::PseudoBCondRI))
 					.addImm(CondCode)
 					.addReg(LHS.getReg())
 					.addImm(RHS.getImm())
 					.addMBB(TailMBB);
   }
-
-  emitPseudoBCond(*branch, HeadMBB);
 
   BuildMI(*TailMBB, TailMBB->begin(), DL, TII.get(CDM::PHI), Dst.getReg())
       .addReg(TrueVal.getReg())
@@ -546,43 +540,4 @@ CDMISelLowering::emitPseudoSelectCC(MachineInstr &MI,
   MI.eraseFromParent();
 
   return TailMBB;
-}
-
-MachineBasicBlock*
-CDMISelLowering::emitPseudoBCond(MachineInstr &MI,
-				 MachineBasicBlock *MBB) const {
-
-  const CDMInstrInfo &TII =
-      *(const CDMInstrInfo *)MBB->getParent()->getSubtarget().getInstrInfo();
-  DebugLoc DL = MI.getDebugLoc();
-
-  auto CondCode = static_cast<CDMCOND::CondOp>(MI.getOperand(0).getImm());
-  auto LHS = MI.getOperand(1);
-  auto RHS = MI.getOperand(2);
-  auto Target = MI.getOperand(3);
-
-  // TODO: Implement optimizations
-
-  MIBundleBuilder Bundler = MIBundleBuilder(*MBB, MI); 
-
-  if (MI.getOpcode() == CDM::PseudoBCondRR){
-	  Bundler.append(BuildMI(*MBB->getParent(), DL, TII.get(CDM::CMP))
-				.addReg(LHS.getReg())
-				.addReg(RHS.getReg()));
-  }
-  else{
-	  Bundler.append(BuildMI(*MBB->getParent(), DL, TII.get(CDM::CMPI))
-				.addReg(LHS.getReg())
-				.addImm(RHS.getImm()));
-  }
-
-  Bundler.append(BuildMI(*MBB->getParent(), DL, TII.get(CDM::BCond))
-		  	.addImm(CondCode)
-			.addMBB(Target.getMBB()));
-
-  finalizeBundle(*MBB, Bundler.begin(), Bundler.end());
-
-  MI.eraseFromParent();
-
-  return MBB;
 }
