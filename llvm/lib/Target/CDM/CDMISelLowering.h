@@ -65,6 +65,9 @@ private:
   SDValue lowerVASTART(SDValue Op, SelectionDAG &DAG) const;
   SDValue lowerVAARG(SDValue Op, SelectionDAG &DAG);
 
+  MachineBasicBlock* emitPseudoSelectCC(MachineInstr &MI,
+		  			MachineBasicBlock *MBB) const;
+
   const CDMSubtarget &Subtarget;
   const unsigned StackReserved = 4 * 2u;
 };

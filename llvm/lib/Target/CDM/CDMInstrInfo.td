@@ -60,8 +60,7 @@ def AND : arithLogicR<"and", and, 1>;
 def OR : arithLogicR<"or", or, 1>;
 def XOR : arithLogicR<"xor", xor, 1>;
 
-def immZext6 : ImmLeaf<i16, [{return (Imm >= 0) && (Imm <= 63);}]>;
-def negimmZext6 : ImmLeaf<i16, [{return (Imm <= 0) && (Imm >= -63);}]>;
+def immZext6 : ImmLeaf<i16, [{return (Imm >= -64) && (Imm <= 63);}]>;
 
 // thanks avr
 def imm16_neg_XFORM : SDNodeXForm<imm, [{
@@ -312,6 +311,10 @@ def stpc
 
 def cond_val : Operand<OtherVT> { let PrintMethod = "printCondCode"; }
 
+def cdmize_cond : SDNodeXForm<cond, [{
+  return CurDAG->getTargetConstant(CCToCondOp(N->get()), N, MVT::i16);
+}]>;
+
 def BCond : CDMInst<(outs), (ins cond_val:$cond, brtarget:$addr),
                     "b$cond\t$addr", []> {
   let isTerminator = 1;
@@ -319,30 +322,57 @@ def BCond : CDMInst<(outs), (ins cond_val:$cond, brtarget:$addr),
   let Uses = [PSR];
 }
 
-def cond_as_i16imm : SDNodeXForm<cond, [{
-  return CurDAG->getTargetConstant(N->get(), SDLoc(N), MVT::i16);
-}]>;
-
 def PseudoSelectCC
-    : CDMInst<(outs CPURegs:$dst),
+    : CDMPseudo<(outs CPURegs:$dst),
               (ins CPURegs:$lhs, CPURegs:$rhs, CPURegs:$vtrue, CPURegs:$vfalse,
                   cond_val:$cnd),
               "",
-              [
-                  // (set CPURegs:$dst, (selectcc CPURegs:$lhs, CPURegs:$rhs,
-                  // CPURegs:$vtrue, CPURegs:$vfalse, (cond_as_i16imm
-                  // cond:$cnd)))
-]> {
-  let isPseudo = true;
+              []> {
   let usesCustomInserter = true;
 }
+
+def PseudoSelectCCI
+    : CDMPseudo<(outs CPURegs:$dst),
+              (ins CPURegs:$lhs, i16imm:$rhs, CPURegs:$vtrue, CPURegs:$vfalse,
+                  cond_val:$cnd),
+              "",
+              []> {
+  let usesCustomInserter = true;
+}
+
+def : Pat<(selectcc CPURegs:$lhs, immZext6:$rhs, CPURegs:$vtrue, CPURegs:$vfalse,
+              cond:$cnd),
+          (PseudoSelectCCI CPURegs:$lhs, immZext6:$rhs, CPURegs:$vtrue,
+              CPURegs:$vfalse, (cdmize_cond $cnd))>;
 
 def : Pat<(selectcc CPURegs:$lhs, CPURegs:$rhs, CPURegs:$vtrue, CPURegs:$vfalse,
               cond:$cnd),
           (PseudoSelectCC CPURegs:$lhs, CPURegs:$rhs, CPURegs:$vtrue,
-              CPURegs:$vfalse, (cond_as_i16imm $cnd))>;
+              CPURegs:$vfalse, (cdmize_cond $cnd))>;
+
+def PseudoBCondRR : CDMPseudo<(outs), (ins cond_val:$cnd, CPURegs:$lhs, CPURegs:$rhs, brtarget:$addr), "", []>{
+  let isTerminator = 1;
+  let isBranch = 1;
+  let Uses = [PSR];
+}
+
+def PseudoBCondRI : CDMPseudo<(outs), (ins cond_val:$cnd, CPURegs:$lhs, i16imm:$rhs, brtarget:$addr), "", []>{
+  let isTerminator = 1;
+  let isBranch = 1;
+  let Uses = [PSR];
+}
+
+def : Pat<(brcc cond:$cnd, CPURegs:$lhs, immZext6:$rhs, bb:$target),
+          (PseudoBCondRI (cdmize_cond $cnd), CPURegs:$lhs, immZext6:$rhs, brtarget:$target)>;
+
+def : Pat<(brcc cond:$cnd, CPURegs:$lhs, CPURegs:$rhs, bb:$target),
+          (PseudoBCondRR (cdmize_cond $cnd), CPURegs:$lhs, CPURegs:$rhs, brtarget:$target)>;
 
 def CMP : CDMInst<(outs), (ins CPURegs:$ra, CPURegs:$rb), "cmp\t$ra, $rb", []> {
+  let Defs = [PSR];
+}
+
+def CMPI : CDMInst<(outs), (ins CPURegs:$r, i16imm:$imm), "cmp\t$r, $imm", []> {
   let Defs = [PSR];
 }
 
@@ -394,7 +424,7 @@ let Defs = [SP], Uses = [SP] in {
 
 // TODO: convert to ArithLogic ???
 def MOVE
-    : CDMInst<(outs CPURegs:$rd), (ins CPURegs:$rs), "movens\t$rs, $rd", []> {
+    : CDMInst<(outs CPURegs:$rd), (ins CPURegs:$rs), "move\t$rs, $rd", []> {
   // let Defs = [PSR];
 }
 

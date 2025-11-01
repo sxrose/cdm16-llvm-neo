@@ -73,6 +73,10 @@ bool CDMInstrInfo::expandPostRAPseudo(MachineInstr &MI) const {
     return false;
   case CDM::PseudoRet:
     expandRet(MBB, MI);
+    break;
+  case CDM::PseudoBCondRI:
+  case CDM::PseudoBCondRR:
+    expandBCond(MBB, MI);
   }
 
   MBB.erase(MI);
@@ -80,12 +84,44 @@ bool CDMInstrInfo::expandPostRAPseudo(MachineInstr &MI) const {
 }
 
 void CDMInstrInfo::expandRet(MachineBasicBlock &MBB,
-                             MachineBasicBlock::iterator I) const {
+                             MachineInstr &MI) const {
   auto Opcode = CDM::rts;
   if (MBB.getParent()->getFunction().getCallingConv() == CallingConv::CdmIsr) {
     Opcode = CDM::rti;
   }
-  BuildMI(MBB, I, I->getDebugLoc(), get(Opcode));
+  BuildMI(MBB, MI, MI.getDebugLoc(), get(Opcode));
+}
+
+void CDMInstrInfo::expandBCond(MachineBasicBlock &MBB,
+                             MachineInstr &MI) const {
+
+  DebugLoc DL = MI.getDebugLoc();
+
+  auto CondCode = static_cast<CDMCOND::CondOp>(MI.getOperand(0).getImm());
+  auto LHS = MI.getOperand(1);
+  auto RHS = MI.getOperand(2);
+  auto Target = MI.getOperand(3);
+
+  // TODO: Implement optimizations
+
+  MIBundleBuilder Bundler = MIBundleBuilder(MBB, MI); 
+
+  if (MI.getOpcode() == CDM::PseudoBCondRR){
+	  Bundler.append(BuildMI(*MBB.getParent(), DL, get(CDM::CMP))
+				.addReg(LHS.getReg())
+				.addReg(RHS.getReg()));
+  }
+  else{
+	  Bundler.append(BuildMI(*MBB.getParent(), DL, get(CDM::CMPI))
+				.addReg(LHS.getReg())
+				.addImm(RHS.getImm()));
+  }
+
+  Bundler.append(BuildMI(*MBB.getParent(), DL, get(CDM::BCond))
+		  	.addImm(CondCode)
+			.addMBB(Target.getMBB()));
+
+  finalizeBundle(MBB, Bundler.begin(), Bundler.end());
 }
 
 void CDMInstrInfo::copyPhysReg(MachineBasicBlock &MBB,

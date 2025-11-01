@@ -126,8 +126,14 @@ void CDMAsmPrinter::emitInstruction(const MachineInstr *Instr) {
   MachineBasicBlock::const_instr_iterator I = Instr->getIterator();
   MachineBasicBlock::const_instr_iterator E = Instr->getParent()->instr_end();
 
-  // TODO: figure out why there's a loop
+  // If instruction we emit is actually inside an instruction bundle,
+  // iterate over all instructions in bundle and emit them all
   do {
+    // Skip bundle pseudo instruction and emit content of a bundle
+    if (I->isBundle()){
+	continue;
+    }
+
     if (I->isPseudo())
       llvm_unreachable("Pseudo opcode found in emitInstruction()");
 
@@ -200,8 +206,6 @@ void CDMAsmPrinter::emitStartOfAsmFile(Module &Module) {
   //   OutStreamer->emitRawText(formatv("{0}: ext\n", ExternalSymbolName));
   // }
 
-  // TODO: this is a fake move. Remove this when actual movens is implemented
-  OutStreamer->emitRawText("\n\nmacro movens/2\npush $1\npop $2\nmend\n\n");
 }
 
 void CDMAsmPrinter::emitEndOfAsmFile(Module &Module) {

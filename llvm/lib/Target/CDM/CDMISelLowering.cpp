@@ -36,6 +36,7 @@ CDMISelLowering::CDMISelLowering(const CDMTargetMachine &TM,
 
   //          setOperationAction(ISD::SELECT_CC, MVT::i16, Expand);
   setOperationAction(ISD::SELECT, MVT::i16, Expand);
+  setOperationAction(ISD::BRCOND, MVT::Other, Expand);
   setOperationAction(ISD::SETCC, MVT::i16, Expand);
   //          setOperationAction(ISD::SELECT_CC, MVT::i16, Custom);
 
@@ -455,9 +456,35 @@ MachineBasicBlock *
 CDMISelLowering::EmitInstrWithCustomInserter(MachineInstr &MI,
                                              MachineBasicBlock *MBB) const {
 
-  assert(MI.getOpcode() == CDM::PseudoSelectCC &&
-         "Unexpected instr type to insert");
+  switch (MI.getOpcode()){
+	  default:
+		llvm_unreachable("Unexpected instr type to insert");
+	  case CDM::PseudoSelectCC:
+	  case CDM::PseudoSelectCCI:
+		return emitPseudoSelectCC(MI, MBB);
+  }
 
+}
+
+SDValue CDMISelLowering::lowerVASTART(SDValue Op, SelectionDAG &DAG) const {
+  MachineFunction &MF = DAG.getMachineFunction();
+  CDMFunctionInfo *FuncInfo = MF.getInfo<CDMFunctionInfo>();
+
+  SDLoc DL(Op);
+  SDValue FI = DAG.getFrameIndex(FuncInfo->getVarArgsFrameIndex(),
+                                 getPointerTy(DAG.getDataLayout()));
+
+  // vastart just stores the address of the VarArgsFrameIndex slot into the
+  // memory location argument.
+  const Value *SV = cast<SrcValueSDNode>(Op.getOperand(2))->getValue();
+  return DAG.getStore(Op.getOperand(0), DL, FI, Op.getOperand(1),
+                      MachinePointerInfo(SV));
+}
+
+
+MachineBasicBlock*
+CDMISelLowering::emitPseudoSelectCC(MachineInstr &MI,
+				    MachineBasicBlock *MBB) const {
   const CDMInstrInfo &TII =
       *(const CDMInstrInfo *)MBB->getParent()->getSubtarget().getInstrInfo();
   DebugLoc DL = MI.getDebugLoc();
@@ -467,7 +494,7 @@ CDMISelLowering::EmitInstrWithCustomInserter(MachineInstr &MI,
   auto RHS = MI.getOperand(2);
   auto TrueVal = MI.getOperand(3);
   auto FalseVal = MI.getOperand(4);
-  auto CondCode = static_cast<ISD::CondCode>(MI.getOperand(5).getImm());
+  auto CondCode = static_cast<CDMCOND::CondOp>(MI.getOperand(5).getImm());
 
   const BasicBlock *LLVM_BB = MBB->getBasicBlock();
 
@@ -489,14 +516,20 @@ CDMISelLowering::EmitInstrWithCustomInserter(MachineInstr &MI,
   HeadMBB->addSuccessor(TailMBB);
   IfFalseMBB->addSuccessor(TailMBB);
 
-  // TODO: check if glue needed
-  BuildMI(HeadMBB, DL, TII.get(CDM::CMP))
-      .addReg(LHS.getReg())
-      .addReg(RHS.getReg());
-
-  BuildMI(HeadMBB, DL, TII.get(CDM::BCond))
-      .addImm(TII.CCToCondOp(CondCode))
-      .addMBB(TailMBB);
+  if (MI.getOpcode() == CDM::PseudoSelectCC){
+	  BuildMI(HeadMBB, DL, TII.get(CDM::PseudoBCondRR))
+					.addImm(CondCode)
+					.addReg(LHS.getReg())
+					.addReg(RHS.getReg())
+					.addMBB(TailMBB);
+  }
+  else{
+	  BuildMI(HeadMBB, DL, TII.get(CDM::PseudoBCondRI))
+					.addImm(CondCode)
+					.addReg(LHS.getReg())
+					.addImm(RHS.getImm())
+					.addMBB(TailMBB);
+  }
 
   BuildMI(*TailMBB, TailMBB->begin(), DL, TII.get(CDM::PHI), Dst.getReg())
       .addReg(TrueVal.getReg())
@@ -507,19 +540,4 @@ CDMISelLowering::EmitInstrWithCustomInserter(MachineInstr &MI,
   MI.eraseFromParent();
 
   return TailMBB;
-}
-
-SDValue CDMISelLowering::lowerVASTART(SDValue Op, SelectionDAG &DAG) const {
-  MachineFunction &MF = DAG.getMachineFunction();
-  CDMFunctionInfo *FuncInfo = MF.getInfo<CDMFunctionInfo>();
-
-  SDLoc DL(Op);
-  SDValue FI = DAG.getFrameIndex(FuncInfo->getVarArgsFrameIndex(),
-                                 getPointerTy(DAG.getDataLayout()));
-
-  // vastart just stores the address of the VarArgsFrameIndex slot into the
-  // memory location argument.
-  const Value *SV = cast<SrcValueSDNode>(Op.getOperand(2))->getValue();
-  return DAG.getStore(Op.getOperand(0), DL, FI, Op.getOperand(1),
-                      MachinePointerInfo(SV));
 }
