@@ -38,6 +38,8 @@ def main():
     parser.add_argument("-exp-targets", default="", help="additional experimental targets (besides CDM) to build (e.g. \"M68k;DirectX\")")
     parser.add_argument("-host-target", action="store_true", help="enable host target")
     parser.add_argument("-debug", action="store_true", help="build with Debug configuration")
+    parser.add_argument("-clang", default="clang", help="host clang to use (default: clang)")
+    parser.add_argument("-clangxx", default="clang++", help="host clang++ to use (default: clang++)")
     parser.add_argument("-linker", default="", help="linker to use (default: {mold | lld | ld})")
     parser.add_argument("-j", type=int, default=1, help="number of linker jobs (default: 1)")
     parser.add_argument("-use-ninja", action="store_true", help="use Ninja build system")
@@ -71,7 +73,7 @@ def main():
         "-S", llvm_src_dir,
         "-B", build_dir,
         "-G", generator,
-        "-DCMAKE_C_COMPILER=clang", "-DCMAKE_CXX_COMPILER=clang++",
+        f"-DCMAKE_C_COMPILER={args.clang}", f"-DCMAKE_CXX_COMPILER={args.clangxx}",
         "-DLLVM_OPTIMIZED_TABLEGEN=ON",
         f"-DLLVM_TARGETS_TO_BUILD={args.targets}",
         f"-DLLVM_EXPERIMENTAL_TARGETS_TO_BUILD=CDM" + add_targets,
@@ -84,6 +86,8 @@ def main():
         "-DLLVM_BUILD_DOCS=OFF",
         "-DLLVM_ENABLE_OCAMLDOC=OFF",
         "-DLLVM_ENABLE_BINDINGS=OFF",
+        "-DLLVM_ENABLE_ZLIB=OFF",
+        "-DLLVM_ENABLE_ZSTD=OFF",
         f"-DLLVM_USE_LINKER={linker}",
         f"-DLLVM_PARALLEL_LINK_JOBS={args.j}",
     ]
