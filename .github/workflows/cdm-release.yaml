@@ -1,0 +1,70 @@
+name: '[CDM] Release'
+
+on:
+  push:
+    tags:
+      - 'ver-*'
+
+jobs:
+  build-test:
+    strategy:
+      matrix:
+        os: [ubuntu-24.04,  macos-26]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+      - name: Clone cdm-devkit
+        run: git clone --depth 1 https://github.com/cdm-processors/cdm-devkit.git cdm-devkit
+      - name: Install `cdm-devkit` package
+        run: |
+              pip install -e cdm-devkit
+      - name: Build cdm-devkit
+        run: |
+              cd cdm-devkit
+              poetry build
+      - name: Build LLVM for Linux (static)
+        if: ${{ !contains(matrix.os, 'macos') }}
+        run: ./llvm//utils/cdm/build.py -j 2 -use-ninja -verbose -static
+      - name: Build LLVM for MacOS (non-static)
+        if: ${{ contains(matrix.os, 'macos') }}
+        run: ./llvm//utils/cdm/build.py -j 2 -use-ninja -verbose
+      - name: Run end-to-end tests
+        run: make -C llvm/test_cdm CLANG=$(realpath llvm/build/bin/clang) test
+      - name: Run lit tests
+        run: ./llvm/build/bin/llvm-lit ./llvm/test/CodeGen/CDM
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: clang-cdm-${{ matrix.os }}
+          path: |
+            ./llvm/build/bin
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+    steps:
+      - name: Create subfolder
+        run: mkdir artifacts_download
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: ./artifacts_download
+      - name: Print files list
+        run: find .
+      - name: Create release
+        uses: softprops/action-gh-release@v2
+        with:
+          body: clang CdM-16 release ${{github.ref_name}}
+          draft: false
+          prerelease: false
+          token: ${{ secrets.GITHUB_TOKEN }}
+          files: |
+            ${{github.workspace}}/artifacts_download/*.zip

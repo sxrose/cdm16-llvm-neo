@@ -1,0 +1,84 @@
+name: '[CDM] Nightly build'
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 21 * * *" # every day 21:00 UTC (4:00 UTC-7)
+
+jobs:
+  check-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      should_run: ${{ steps.check.outputs.should_run }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Check if main changed since last nightly
+        id: check
+        run: |
+          LAST_TAG=$(git tag --list "nightly-*" --sort=-creatordate | head -n1)
+
+          if [ -z "$LAST_TAG" ]; then
+            echo "should_run=true" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          LAST_COMMIT=$(git rev-list -n 1 $LAST_TAG)
+          MAIN_COMMIT=$(git rev-parse origin/main)
+
+          if [ "$LAST_COMMIT" = "$MAIN_COMMIT" ]; then
+            echo "No changes since last nightly"
+            echo "should_run=false" >> $GITHUB_OUTPUT
+          else
+            echo "Changes detected"
+            echo "should_run=true" >> $GITHUB_OUTPUT
+          fi
+
+  build:
+    strategy:
+      matrix:
+        os: [ubuntu-24.04,  macos-26]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: checkout repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - name: Build Linux LLVM (static)
+        if: ${{ !contains(matrix.os, 'macos') }}
+        run: ./llvm//utils/cdm/build.py -j 2 -use-ninja -verbose -static
+      - name: Build MacOS LLVM (non-static)
+        if: ${{ contains(matrix.os, 'macos') }}
+        run: ./llvm//utils/cdm/build.py -j 2 -use-ninja -verbose
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: clang-cdm-${{ matrix.os }}
+          path: |
+            ./llvm/build/bin
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+    steps:
+      - name: Create subfolder
+        run: mkdir artifacts_download
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: ./artifacts_download
+      - name: Print files list
+        run: find .
+      - name: Create release
+        uses: softprops/action-gh-release@v2
+        with:
+          body: clang CdM-16 ${{github.ref_name}}
+          draft: false
+          prerelease: true
+          token: ${{ secrets.GITHUB_TOKEN }}
+          files: |
+            ${{github.workspace}}/artifacts_download/*.zip
