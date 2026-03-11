@@ -11,7 +11,7 @@ jobs:
     outputs:
       should_run: ${{ steps.check.outputs.should_run }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
       - name: Check if main changed since last nightly
@@ -42,7 +42,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - name: checkout repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 1
       - name: Build Linux LLVM (static)
@@ -52,7 +52,7 @@ jobs:
         if: ${{ contains(matrix.os, 'macos') }}
         run: ./llvm//utils/cdm/build.py -j 2 -use-ninja -verbose
       - name: Upload artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: clang-cdm-${{ matrix.os }}
           path: |
@@ -68,7 +68,7 @@ jobs:
       - name: Create subfolder
         run: mkdir artifacts_download
       - name: Download artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           path: ./artifacts_download
       - name: Print files list

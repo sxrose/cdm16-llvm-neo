@@ -13,7 +13,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 1
       - name: Install Poetry
@@ -38,7 +38,7 @@ jobs:
       - name: Run lit tests
         run: ./llvm/build/bin/llvm-lit ./llvm/test/CodeGen/CDM
       - name: Upload artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: clang-cdm-${{ matrix.os }}
           path: |
@@ -54,7 +54,7 @@ jobs:
       - name: Create subfolder
         run: mkdir artifacts_download
       - name: Download artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           path: ./artifacts_download
       - name: Print files list
