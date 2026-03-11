@@ -45,7 +45,7 @@ jobs:
             ./llvm/build/bin
 
   release:
-    needs: build
+    needs: build-test
     runs-on: ubuntu-latest
 
     permissions:
