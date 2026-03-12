@@ -1,4 +1,4 @@
-name: '[CDM] Run tests on PR to main'
+name: '[CDM] Run tests on PR'
 
 on:
   workflow_dispatch:
