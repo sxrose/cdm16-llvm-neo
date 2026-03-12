@@ -50,6 +50,13 @@ jobs:
     permissions:
       contents: write
     steps:
+      - name: Checkout repo
+        uses: actions/checkout@v6
+      - name: Create nightly tag
+        run: |
+          TAG="nightly-$(date +'%Y-%m-%d')"
+          git tag $TAG
+          git push origin $TAG
       - name: Create subfolder
         run: mkdir artifacts_download
       - name: Download artifacts
