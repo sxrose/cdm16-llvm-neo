@@ -36,27 +36,12 @@ jobs:
           fi
 
   build:
-    strategy:
-      matrix:
-        os: [ubuntu-24.04,  macos-26]
-    runs-on: ${{ matrix.os }}
-    steps:
-      - name: checkout repo
-        uses: actions/checkout@v6
-        with:
-          fetch-depth: 1
-      - name: Build Linux LLVM (static)
-        if: ${{ !contains(matrix.os, 'macos') }}
-        run: ./llvm//utils/cdm/build.py -j 2 -use-ninja -verbose -static
-      - name: Build MacOS LLVM (non-static)
-        if: ${{ contains(matrix.os, 'macos') }}
-        run: ./llvm//utils/cdm/build.py -j 2 -use-ninja -verbose
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v6
-        with:
-          name: clang-cdm-${{ matrix.os }}
-          path: |
-            ./llvm/build/bin
+    needs: check-changes
+    if: needs.check-changes.outputs.should_run == 'true'
+    uses: ./.github/workflows/cdm-build.yaml
+    with:
+      static-build: true
+      upload: true
 
   release:
     needs: build
@@ -76,7 +61,7 @@ jobs:
       - name: Create release
         uses: softprops/action-gh-release@v2
         with:
-          body: clang CdM-16 ${{github.ref_name}}
+          body: clang with CdM-16 support ${{github.ref_name}}
           draft: false
           prerelease: true
           token: ${{ secrets.GITHUB_TOKEN }}
