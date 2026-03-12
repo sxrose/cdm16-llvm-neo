@@ -4,10 +4,10 @@ on:
   workflow_call:
     inputs:
       static-build:
-        type: bool
+        type: boolean
         required: true
       upload:
-        type: bool
+        type: boolean
         required: true
 
 jobs:
