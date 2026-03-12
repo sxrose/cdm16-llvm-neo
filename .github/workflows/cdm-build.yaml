@@ -40,7 +40,7 @@ jobs:
           ./llvm//utils/cdm/build.py -j 2 \
             -use-ninja \
             -verbose \
-            ${{ inputs.static-build && !contains(matrix.os, 'macos') && '-static' || '' }}"
+            ${{ inputs.static-build && !contains(matrix.os, 'macos') && '-static' || '' }}
       - name: Run end-to-end tests
         run: make -C llvm/test_cdm CLANG=$(realpath llvm/build/bin/clang) test
       - name: Run lit tests
