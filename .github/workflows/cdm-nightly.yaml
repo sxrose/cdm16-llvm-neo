@@ -6,13 +6,14 @@ on:
     - cron: "0 21 * * *" # every day 21:00 UTC (4:00 UTC+7)
 
 jobs:
-  build:
+  build-test:
     uses: ./.github/workflows/cdm-build.yaml
     with:
       static-build: true
       upload: true
 
   release:
+    needs: build-test
     runs-on: ubuntu-latest
     steps:
       - name: Create subfolder
