@@ -9,9 +9,6 @@ on:
       upload:
         type: boolean
         required: true
-    outputs:
-      run-id:
-        value: ${{ github.run_id }}
 
 jobs:
   build-test:
@@ -49,7 +46,7 @@ jobs:
       - name: Run lit tests
         run: ./llvm/build/bin/llvm-lit ./llvm/test/CodeGen/CDM
       - name: Upload artifacts
-        if: inputs.upload == 'true'
+        if: inputs.upload
         uses: actions/upload-artifact@v6
         with:
           name: clang-cdm-${{ matrix.os }}
