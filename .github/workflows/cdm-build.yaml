@@ -9,6 +9,9 @@ on:
       upload:
         type: boolean
         required: true
+    outputs:
+      run-id:
+        value: ${{ github.run_id }}
 
 jobs:
   build-test:
