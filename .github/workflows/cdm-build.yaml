@@ -45,9 +45,13 @@ jobs:
         run: make -C llvm/test_cdm CLANG=$(realpath llvm/build/bin/clang) test
       - name: Run lit tests
         run: ./llvm/build/bin/llvm-lit ./llvm/test/CodeGen/CDM
+      - name: Compress artifacts
+        if: inputs.upload
+        run: |
+          tar --strip-components=2 -czvf clang-cdm-${{ matrix.os }}.tar.gz llvm/build/bin
       - name: Upload artifacts
         if: inputs.upload
         uses: actions/upload-artifact@v6
         with:
           name: clang-cdm-${{ matrix.os }}
-          path: ./llvm/build/bin
+          path: clang-cdm-${{ matrix.os }}.tar.gz
