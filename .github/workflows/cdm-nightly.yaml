@@ -34,5 +34,5 @@ jobs:
           prerelease: true
           body: 'Nightly release built from main branch'
           files: |
-            ${{github.workspace}}/artifacts_download/*.tar.gz
+            ${{github.workspace}}/artifacts_download/*/*.tar.gz
 

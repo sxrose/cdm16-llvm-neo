@@ -35,4 +35,4 @@ jobs:
           prerelease: false
           token: ${{ secrets.GITHUB_TOKEN }}
           files: |
-            ${{github.workspace}}/artifacts_download/*.tar.gz
+            ${{github.workspace}}/artifacts_download/*/*.tar.gz

@@ -53,5 +53,6 @@ jobs:
         if: inputs.upload
         uses: actions/upload-artifact@v6
         with:
-          name: clang-cdm-${{ matrix.os }}
+          compression-level: 0
+          name: ${{ matrix.os }}
           path: clang-cdm-${{ matrix.os }}.tar.gz
