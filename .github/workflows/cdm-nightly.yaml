@@ -3,60 +3,18 @@ name: '[CDM] Nightly build'
 on:
   workflow_dispatch:
   schedule:
-    - cron: "0 21 * * *" # every day 21:00 UTC (4:00 UTC-7)
+    - cron: "0 21 * * *" # every day 21:00 UTC (4:00 UTC+7)
 
 jobs:
-  check-changes:
-    runs-on: ubuntu-latest
-    outputs:
-      should_run: ${{ steps.check.outputs.should_run }}
-    steps:
-      - uses: actions/checkout@v6
-        with:
-          fetch-depth: 0
-      - name: Check if main changed since last nightly
-        id: check
-        run: |
-          LAST_TAG=$(git tag --list "nightly-*" --sort=-creatordate | head -n1)
-
-          if [ -z "$LAST_TAG" ]; then
-            echo "should_run=true" >> $GITHUB_OUTPUT
-            exit 0
-          fi
-
-          LAST_COMMIT=$(git rev-list -n 1 $LAST_TAG)
-          MAIN_COMMIT=$(git rev-parse origin/main)
-
-          if [ "$LAST_COMMIT" = "$MAIN_COMMIT" ]; then
-            echo "No changes since last nightly"
-            echo "should_run=false" >> $GITHUB_OUTPUT
-          else
-            echo "Changes detected"
-            echo "should_run=true" >> $GITHUB_OUTPUT
-          fi
-
   build:
-    needs: check-changes
-    if: needs.check-changes.outputs.should_run == 'true'
     uses: ./.github/workflows/cdm-build.yaml
     with:
       static-build: true
       upload: true
 
   release:
-    needs: build
     runs-on: ubuntu-latest
-
-    permissions:
-      contents: write
     steps:
-      - name: Checkout repo
-        uses: actions/checkout@v6
-      - name: Create nightly tag
-        run: |
-          TAG="nightly-$(date +'%Y-%m-%d')"
-          git tag $TAG
-          git push origin $TAG
       - name: Create subfolder
         run: mkdir artifacts_download
       - name: Download artifacts
@@ -65,12 +23,15 @@ jobs:
           path: ./artifacts_download
       - name: Print files list
         run: find .
-      - name: Create release
-        uses: softprops/action-gh-release@v2
+      - name: Update Nightly Release
+        uses: andelf/nightly-release@main
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          body: clang with CdM-16 support ${{github.ref_name}}
-          draft: false
+          tag_name: nightly
+          name: 'clang with CdM-16 support nightly build'
           prerelease: true
-          token: ${{ secrets.GITHUB_TOKEN }}
+          body: 'Nightly release built from main branch'
           files: |
             ${{github.workspace}}/artifacts_download/*.zip
+
