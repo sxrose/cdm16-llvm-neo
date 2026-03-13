@@ -1,4 +1,4 @@
-name: '[CDM] Build and test clang/LLVM binaries with CDM-16 target'
+name: '[CDM] Build and test'
 
 on:
   workflow_call:
