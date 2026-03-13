@@ -23,8 +23,8 @@ jobs:
         run: mkdir artifacts_download
       - name: Download artifacts
         uses: actions/download-artifact@v7
-        run-id: ${{ needs.build-test.outputs.run-id }}
         with:
+          run-id: ${{ needs.build-test.outputs.run-id }}
           path: ./artifacts_download
       - name: Print files list
         run: find .
