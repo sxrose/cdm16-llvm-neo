@@ -26,7 +26,7 @@ def run(cmd, verbose):
     subprocess.check_call(cmd)
 
 def main():
-    parser = argparse.ArgumentParser("Opinionated build script")
+    parser = argparse.ArgumentParser()
 
     parser.add_argument(
         "build_dir",
