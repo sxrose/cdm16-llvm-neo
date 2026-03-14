@@ -25,9 +25,7 @@ jobs:
         uses: snok/install-poetry@v1
       - name: Clone cdm-devkit
         run: |
-          git clone --depth 1 \
-            https://github.com/cdm-processors/cdm-devkit.git \
-            cdm-devkit
+          git clone --depth 1 https://github.com/cdm-processors/cdm-devkit.git cdm-devkit
       - name: Install `cdm-devkit` package
         run: pip install -e cdm-devkit
       - name: Build cdm-devkit
@@ -37,19 +35,22 @@ jobs:
       - name: Build LLVM
         ## as of now macos doesn't support building LLVM staticly
         run: |
-          ./llvm/utils/cdm/build.py -j 2 -v \
-            ${{ inputs.static-build && !contains(matrix.os, 'macos') && '--static' || '' }}
+          ./llvm/utils/cdm/build.py -j 2 -v ${{ inputs.static-build && !contains(matrix.os, 'macos') && '--static' || '' }}
       - name: Run end-to-end tests
         run: make -C llvm/test_cdm CLANG=$(realpath llvm/build/bin/clang) test
       - name: Run lit tests
         run: ./llvm/build/bin/llvm-lit ./llvm/test/CodeGen/CDM
-      - name: Compress artifacts
-        if: inputs.upload
+      - name: Compress artifacts (posix)
+        if: inputs.upload && !contains(matrix.os, 'windows')
         run: |
           tar --strip-components=2 \
             -czvf \
             clang-cdm-${{ contains(matrix.os, 'ubuntu') && 'linux' || matrix.os }}.tar.gz \
             llvm/build/bin
+      - name: Compress artifacts (Windows)
+        if: inputs.upload && contains(matrix.os, 'windows')
+        run: |
+          tar --strip-components=2 -a -c -f clang-cdm-windows.zip llvm\build\bin
       - name: Upload artifacts
         if: inputs.upload
         uses: actions/upload-artifact@v6
@@ -58,3 +59,4 @@ jobs:
           name: ${{ matrix.os }}
           path: |
             *.tar.gz
+            *.zip
