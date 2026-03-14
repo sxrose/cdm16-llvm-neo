@@ -55,4 +55,5 @@ jobs:
         with:
           compression-level: 0
           name: ${{ matrix.os }}
-          path: clang-cdm-${{ matrix.os }}.tar.gz
+          path: |
+            clang-cdm-${{ contains(matrix.os, 'ubuntu' && 'linux' || matrix.os ) }}.tar.gz
