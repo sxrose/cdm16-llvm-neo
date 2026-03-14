@@ -34,19 +34,20 @@ def main():
         default=PROJECT_PATH + "/llvm/build",
         help="build directory (default: cdm16-llvm-neo/llvm/build)"
     )
-    parser.add_argument("-targets", default="", help="additional targets to build (e.g. \"RISCV;X86;Mips\")"),
-    parser.add_argument("-exp-targets", default="", help="additional experimental targets (besides CDM) to build (e.g. \"M68k;DirectX\")")
-    parser.add_argument("-host-target", action="store_true", help="enable host target")
-    parser.add_argument("-debug", action="store_true", help="build with Debug configuration")
-    parser.add_argument("-clang", default="clang", help="host clang to use (default: clang)")
-    parser.add_argument("-clangxx", default="clang++", help="host clang++ to use (default: clang++)")
-    parser.add_argument("-linker", default="", help="linker to use (default: {mold | lld | ld})")
-    parser.add_argument("-j", type=int, default=1, help="number of linker jobs (default: 1)")
-    parser.add_argument("-use-ninja", action="store_true", help="use Ninja build system")
-    parser.add_argument("-no-assertions", action="store_true", help="disable assertions")
-    parser.add_argument("-static", action="store_true", help="build with static linking")
-    parser.add_argument("-configure-flags", default="", help="additional CMake configure flags")
-    parser.add_argument("-verbose", action="store_true", help="verbose output")
+    parser.add_argument("--targets", default="", help="additional targets to build (e.g. \"RISCV;X86;Mips\")"),
+    parser.add_argument("--exp-targets", default="", help="additional experimental targets (besides CDM) to build (e.g. \"M68k;DirectX\")")
+    parser.add_argument("--host-target", action="store_true", help="enable host target")
+    parser.add_argument("--debug", action="store_true", help="build with Debug configuration")
+    parser.add_argument("--build-type", default="Release", help="CMake build type [Debug, Release, RelWithDebInfo, MinSizeRel] (default: Release)")
+    parser.add_argument("--cc", default="clang", help="host C compiler to use; support may vary, therefore default is recommended (default: clang)")
+    parser.add_argument("--cxx", default="clang++", help="host C++ compiler to use, support may vary; therefore default is recommended (default: clang++)")
+    parser.add_argument("--linker", default="", help="linker to use (default: {mold | lld | ld})")
+    parser.add_argument("--jobs", "-j", type=int, default=1, help="number of linker jobs (default: 1)")
+    parser.add_argument("--generator", "-G", default="Ninja", help="Generator for build tool (default: Ninja)")
+    parser.add_argument("--no-assertions", action="store_true", help="disable assertions")
+    parser.add_argument("--static", action="store_true", help="build with static linking")
+    parser.add_argument("--configure-flags", default="", help="additional CMake configure flags")
+    parser.add_argument("--verbose", "-v", action="store_true", help="verbose output")
 
     args = parser.parse_args()
 
@@ -60,8 +61,6 @@ def main():
 
     linker = args.linker if args.linker else find_linker(args.verbose)
 
-    generator = "Ninja" if args.use_ninja else "Unix Makefiles"
-
     targets = args.targets
     if args.host_target:
         targets = "Native" + (f";{targets}" if targets else "")
@@ -72,15 +71,16 @@ def main():
         "cmake",
         "-S", llvm_src_dir,
         "-B", build_dir,
-        "-G", generator,
-        f"-DCMAKE_C_COMPILER={args.clang}", f"-DCMAKE_CXX_COMPILER={args.clangxx}",
+        "-G", args.generator,
+        f"-DCMAKE_C_COMPILER={args.cc}", f"-DCMAKE_CXX_COMPILER={args.cxx}",
         "-DLLVM_OPTIMIZED_TABLEGEN=ON",
-        f"-DLLVM_TARGETS_TO_BUILD={args.targets}",
+        f"-DLLVM_TARGETS_TO_BUILD={targets}",
         f"-DLLVM_EXPERIMENTAL_TARGETS_TO_BUILD=CDM" + add_targets,
-        "-DLLVM_DEFAULT_TARGET_TRIPLE=cdm",
+        "-DLLVM_DEFAULT_TARGET_TRIPLE=cdm-cocas",
         f"-DCMAKE_BUILD_TYPE={build_type}",
         f"-DLLVM_ENABLE_ASSERTIONS={assertions}",
         "-DLLVM_ENABLE_PROJECTS=clang;lld",
+        "-DLLVM_ENABLE_RUNTIMES=cdm-rt",
         "-DLLVM_INCLUDE_EXAMPLES=OFF",
         "-DLLVM_INCLUDE_BENCHMARKS=OFF",
         "-DLLVM_BUILD_DOCS=OFF",
@@ -89,7 +89,7 @@ def main():
         "-DLLVM_ENABLE_ZLIB=OFF",
         "-DLLVM_ENABLE_ZSTD=OFF",
         f"-DLLVM_USE_LINKER={linker}",
-        f"-DLLVM_PARALLEL_LINK_JOBS={args.j}",
+        f"-DLLVM_PARALLEL_LINK_JOBS={args.jobs}",
     ]
 
     if args.static:
@@ -99,6 +99,7 @@ def main():
         cmake_cmd.extend(args.configure_flags.split())
 
     log("Configuring LLVM...", args.verbose)
+
     run(cmake_cmd, args.verbose)
 
     build_cmd = [

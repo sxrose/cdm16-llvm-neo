@@ -37,10 +37,8 @@ jobs:
       - name: Build LLVM
         ## as of now macos doesn't support building LLVM staticly
         run: |
-          ./llvm//utils/cdm/build.py -j 2 \
-            -use-ninja \
-            -verbose \
-            ${{ inputs.static-build && !contains(matrix.os, 'macos') && '-static' || '' }}
+          ./llvm//utils/cdm/build.py -j 2 -v \
+            ${{ inputs.static-build && !contains(matrix.os, 'macos') && '--static' || '' }}
       - name: Run end-to-end tests
         run: make -C llvm/test_cdm CLANG=$(realpath llvm/build/bin/clang) test
       - name: Run lit tests
@@ -50,7 +48,7 @@ jobs:
         run: |
           tar --strip-components=2 \
             -czvf \
-            clang-cdm-clang-cdm-${{ contains(matrix.os, 'ubuntu') && 'linux' || matrix.os }}.tar.gz \
+            clang-cdm-${{ contains(matrix.os, 'ubuntu') && 'linux' || matrix.os }}.tar.gz \
             llvm/build/bin
       - name: Upload artifacts
         if: inputs.upload
