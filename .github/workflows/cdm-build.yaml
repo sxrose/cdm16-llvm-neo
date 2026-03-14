@@ -48,7 +48,10 @@ jobs:
       - name: Compress artifacts
         if: inputs.upload
         run: |
-          tar --strip-components=2 -czvf clang-cdm-${{ matrix.os }}.tar.gz llvm/build/bin
+          tar --strip-components=2 \
+            -czvf \
+            clang-cdm-clang-cdm-${{ contains(matrix.os, 'ubuntu') && 'linux' || matrix.os ) }}.tar.gz \
+            llvm/build/bin
       - name: Upload artifacts
         if: inputs.upload
         uses: actions/upload-artifact@v6
@@ -56,4 +59,4 @@ jobs:
           compression-level: 0
           name: ${{ matrix.os }}
           path: |
-            clang-cdm-${{ contains(matrix.os, 'ubuntu' && 'linux' || matrix.os ) }}.tar.gz
+            *.tar.gz
