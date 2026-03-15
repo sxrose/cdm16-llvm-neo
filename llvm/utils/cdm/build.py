@@ -128,7 +128,7 @@ def main():
     print(f"Build type: {args.build_type}")
     print(f"Assertions: {'ON' if assertions == 'ON' else 'OFF'}")
     print(f"Compilers used: {cc}, {cxx}")
-    if (args.linker)
+    if (args.linker):
         print(f"Linker used: {args.linker}")
 
 if __name__ == "__main__":
