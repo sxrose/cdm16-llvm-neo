@@ -57,16 +57,16 @@ jobs:
       - name: Platform variable
         run: |
           PLATFORM_OS=${{ runner.os }}
-          PLATFORM_OS="${PLATFORM_OS,,}"
+          PLATFORM_OS=$( echo $PLATFORM_OS | tr '[:upper:]' '[:lower:]' )
           PLATFORM_ARCH=$(uname -m)
-      - name: Compress artifacts (posix)
+      - name: Compress artifacts (tarball)
         if: inputs.upload && (runner.os != 'Windows')
         run: |
           tar --strip-components=2 \
             -czvf \
             clang-cdm-${PLATFORM_OS}-${PLATFORM_ARCH}.tar.gz \
             llvm/build/bin
-      - name: Compress artifacts (Windows)
+      - name: Compress artifacts (zip.. ball?)
         if: inputs.upload && (runner.os == 'Windows')
         run: |
           tar --strip-components=2 -a -c -f clang-cdm-${PLATFORM_OS}-${PLATFORM_ARCH}.zip llvm/build/bin
