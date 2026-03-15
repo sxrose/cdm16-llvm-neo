@@ -125,9 +125,11 @@ def main():
 
     print("\nLLVM build completed successfully.")
     print(f"Build directory: {build_dir}")
-    print(f"Build type: {build_type}")
+    print(f"Build type: {args.build_type}")
     print(f"Assertions: {'ON' if assertions == 'ON' else 'OFF'}")
-    print(f"Linker used: {linker}")
+    print(f"Compilers used: {cc}, {cxx}")
+    if (args.linker)
+        print(f"Linker used: {args.linker}")
 
 if __name__ == "__main__":
     main()
