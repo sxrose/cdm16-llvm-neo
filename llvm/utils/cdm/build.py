@@ -14,9 +14,8 @@ def log(msg, verbose):
         print(msg)
 
 def default_cc(verbose):
-    running_system = platform.system()
     cc = "clang"
-    if (running_system == "Windows"):
+    if (platform.system() == "Windows"):
         log("Running on windows, using cl.exe as default C compiler", verbose)
         cc = "cl"
     if not (shutil.which(cc)):
@@ -24,8 +23,8 @@ def default_cc(verbose):
     return cc
 
 def default_cxx(verbose):
-    running_system = platform.system()
-    if (running_system == "Windows"):
+    cxx = "clang++"
+    if (platform.system() == "Windows"):
         log("Running on windows, using cl.exe as default C++ compiler", verbose)
         cxx = "cl"
     if not (shutil.which(cxx)):
@@ -33,10 +32,10 @@ def default_cxx(verbose):
     return cxx
 
 def find_linker(verbose):
-    if (running_system == "Windows"):
+    if (platform.system() == "Windows"):
         log("Running on windows, using link.exe as default linker", verbose)
         if not (shutil.which("link")):
-            raise RuntimeError("No suitable linker found: link")
+            raise RuntimeError("MSVC linker (link.exe) not found")
         return 'link'
 
     for linker in ["mold", "lld", "ld"]:
