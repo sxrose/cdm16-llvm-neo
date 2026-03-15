@@ -35,10 +35,14 @@ jobs:
         run: |
           cd cdm-devkit
           poetry build
-      - name: Build LLVM
-        ## as of now macos doesn't support building LLVM staticly
+      - name: Build LLVM (Linux/static)
+        if: runner.os == 'Linux'
         run: |
-          ./llvm/utils/cdm/build.py -j 2 -v ${{ inputs.static-build && (runner.os != 'macOS') && '--static' || '' }}
+          ./llvm/utils/cdm/build.py --static -j 2 -v
+      - name: Build LLVM (non-static)
+        if: runner.os != 'Linux'
+        run: |
+          ./llvm/utils/cdm/build.py -j 2 -v
       - name: Run end-to-end tests
         run: make -C llvm/test_cdm CLANG=$(realpath llvm/build/bin/clang) test
       - name: Run lit tests
