@@ -35,6 +35,13 @@ jobs:
         run: |
           cd cdm-devkit
           poetry build
+      - name: Enable MSVC Dev (Windows)
+        if: runner.os == 'Windows'
+        uses: ilammy/msvc-dev-cmd@v1
+      - name: Remove GNU Link (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          rm /usr/bin/link
       - name: Build LLVM (Linux/static)
         if: runner.os == 'Linux'
         run: |

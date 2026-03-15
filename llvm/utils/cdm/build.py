@@ -5,6 +5,7 @@ import os
 import shutil
 import subprocess
 import sys
+import platform
 
 PROJECT_PATH=os.path.realpath(__file__ + "/../../../..")
 
@@ -12,7 +13,32 @@ def log(msg, verbose):
     if verbose:
         print(msg)
 
+def default_cc(verbose):
+    running_system = platform.system()
+    cc = "clang"
+    if (running_system == "Windows"):
+        log("Running on windows, using cl.exe as default C compiler", verbose)
+        cc = "cl"
+    if not (shutil.which(cc)):
+        raise RuntimeError("No suitable default C compiler found")
+    return cc
+
+def default_cxx(verbose):
+    running_system = platform.system()
+    if (running_system == "Windows"):
+        log("Running on windows, using cl.exe as default C++ compiler", verbose)
+        cxx = "cl"
+    if not (shutil.which(cxx)):
+        raise RuntimeError("No suitable default C++ compiler found")
+    return cxx
+
 def find_linker(verbose):
+    if (running_system == "Windows"):
+        log("Running on windows, using link.exe as default linker", verbose)
+        if not (shutil.which("link")):
+            raise RuntimeError("No suitable linker found: link")
+        return 'link'
+
     for linker in ["mold", "lld", "ld"]:
         path = shutil.which(linker)
         if path:
@@ -39,8 +65,8 @@ def main():
     parser.add_argument("--host-target", action="store_true", help="enable host target")
     parser.add_argument("--debug", action="store_true", help="build with Debug configuration")
     parser.add_argument("--build-type", default="Release", help="CMake build type [Debug, Release, RelWithDebInfo, MinSizeRel] (default: Release)")
-    parser.add_argument("--cc", default="clang", help="host C compiler to use; support may vary, therefore default is recommended (default: clang)")
-    parser.add_argument("--cxx", default="clang++", help="host C++ compiler to use, support may vary; therefore default is recommended (default: clang++)")
+    parser.add_argument("--cc", default="clang", help="host C compiler to use; support may vary, therefore default is recommended (default: clang or cl)")
+    parser.add_argument("--cxx", default="clang++", help="host C++ compiler to use, support may vary; therefore default is recommended (default: clang++ or cl)")
     parser.add_argument("--linker", default="", help="linker to use (default: {mold | lld | ld})")
     parser.add_argument("--jobs", "-j", type=int, default=1, help="number of linker jobs (default: 1)")
     parser.add_argument("--generator", "-G", default="Ninja", help="Generator for build tool (default: Ninja)")
@@ -59,6 +85,8 @@ def main():
     build_type = "Debug" if args.debug else "Release"
     assertions = "OFF" if args.no_assertions else "ON"
 
+    cc = args.cc if args.cc else default_cc(args.verbose)
+    cxx = args.cxx if args.cxx else default_cxx(args.verbose)
     linker = args.linker if args.linker else find_linker(args.verbose)
 
     targets = args.targets
@@ -72,7 +100,7 @@ def main():
         "-S", llvm_src_dir,
         "-B", build_dir,
         "-G", args.generator,
-        f"-DCMAKE_C_COMPILER={args.cc}", f"-DCMAKE_CXX_COMPILER={args.cxx}",
+        f"-DCMAKE_C_COMPILER={cc}", f"-DCMAKE_CXX_COMPILER={cxx}",
         "-DLLVM_OPTIMIZED_TABLEGEN=ON",
         f"-DLLVM_TARGETS_TO_BUILD={targets}",
         f"-DLLVM_EXPERIMENTAL_TARGETS_TO_BUILD=CDM" + add_targets,
