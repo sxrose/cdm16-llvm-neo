@@ -54,7 +54,7 @@ jobs:
       - name: Run end-to-end tests
         continue-on-error: true
         run: make -C llvm/test_cdm SHELL=bash CLANG=$(realpath llvm/build/bin/clang) test
-      - run: ls -R ## TMP
+      - run: cd llvm/test_cdm && ls -R ## TMP
       - name: Run lit tests
         run: ./llvm/build/bin/llvm-lit ./llvm/test/CodeGen/CDM
       - name: Platform variable
