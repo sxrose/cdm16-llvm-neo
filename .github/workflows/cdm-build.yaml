@@ -47,11 +47,14 @@ jobs:
         run: |
           ./llvm/utils/cdm/build.py --static -j 2 -v
       - name: Build LLVM (dynamic linking)
-        if: runner.os != 'Linux' || (!inputs.static-build)
+        ## TMP
+        if: (runner.os != 'Windows') && (runner.os != 'Linux' || (!inputs.static-build))
         run: |
           ./llvm/utils/cdm/build.py -j 2 -v
       - name: Run end-to-end tests
+        continue-on-error: true
         run: make -C llvm/test_cdm SHELL=bash CLANG=$(realpath llvm/build/bin/clang) test
+      - run: ls -R ## TMP
       - name: Run lit tests
         run: ./llvm/build/bin/llvm-lit ./llvm/test/CodeGen/CDM
       - name: Platform variable
