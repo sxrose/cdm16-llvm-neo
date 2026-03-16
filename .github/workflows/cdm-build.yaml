@@ -42,16 +42,16 @@ jobs:
         if: runner.os == 'Windows'
         run: |
           rm /usr/bin/link
-      - name: Build LLVM (Linux/static)
-        if: runner.os == 'Linux'
+      - name: Build LLVM (static linking)
+        if: inputs.static-build && runner.os == 'Linux'
         run: |
           ./llvm/utils/cdm/build.py --static -j 2 -v
-      - name: Build LLVM (non-static)
-        if: runner.os != 'Linux'
+      - name: Build LLVM (dynamic linking)
+        if: runner.os != 'Linux' || (!inputs.static-build)
         run: |
           ./llvm/utils/cdm/build.py -j 2 -v
       - name: Run end-to-end tests
-        run: make -C llvm/test_cdm CLANG=$(realpath llvm/build/bin/clang) test
+        run: make -C llvm/test_cdm SHELL=bash CLANG=$(realpath llvm/build/bin/clang) test
       - name: Run lit tests
         run: ./llvm/build/bin/llvm-lit ./llvm/test/CodeGen/CDM
       - name: Platform variable
