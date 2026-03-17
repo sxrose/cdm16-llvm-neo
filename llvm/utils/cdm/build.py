@@ -52,7 +52,6 @@ def main():
     parser.add_argument("--build-type", default="Release", help="CMake build type [Debug, Release, RelWithDebInfo, MinSizeRel] (default: Release)")
     parser.add_argument("--cc", default="", help="host C compiler to use; support may vary, therefore default is recommended (default: clang or cl)")
     parser.add_argument("--cxx", default="", help="host C++ compiler to use, support may vary; therefore default is recommended (default: clang++ or cl)")
-    parser.add_argument("--linker", default="", help="linker to use (default: autodetect)")
     parser.add_argument("--jobs", "-j", type=int, default=1, help="number of linker jobs (default: 1)")
     parser.add_argument("--generator", "-G", default="Ninja", help="Generator for build tool (default: Ninja)")
     parser.add_argument("--no-assertions", action="store_true", help="disable assertions")
@@ -105,9 +104,6 @@ def main():
     if args.static:
         cmake_cmd.extend(["-DLLVM_STATIC_LINK_CXX_STDLIB=ON", "-DLLVM_BUILD_STATIC=ON", "-DLIBCLANG_BUILD_STATIC=ON"])
 
-    if args.linker:
-        cmake_cmd.append(f"-DLLVM_USE_LINKER={args.linker}")
-
     if args.configure_flags:
         cmake_cmd.extend(args.configure_flags.split())
 
@@ -128,8 +124,6 @@ def main():
     print(f"Build type: {args.build_type}")
     print(f"Assertions: {'ON' if assertions == 'ON' else 'OFF'}")
     print(f"Compilers used: {cc}, {cxx}")
-    if (args.linker):
-        print(f"Linker used: {args.linker}")
 
 if __name__ == "__main__":
     main()
