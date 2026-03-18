@@ -51,7 +51,6 @@ jobs:
         run: |
           ./llvm/utils/cdm/build.py -j 2 -v
       - name: Run end-to-end tests
-        continue-on-error: true
         run: make -C llvm/test_cdm SHELL=bash CLANG=$(realpath llvm/build/bin/clang) test
       - name: Run lit tests (POSIX)
         if: runner.os != 'Windows'
@@ -59,22 +58,17 @@ jobs:
       - name: Run lit tests (Windows)
         if: runner.os == 'Windows'
         run: python3 ./llvm/build/bin/llvm-lit.py ./llvm/test/CodeGen/CDM
-      - name: Platform variable
-        run: |
-          PLATFORM_OS=${{ runner.os }}
-          PLATFORM_OS=$( echo $PLATFORM_OS | tr '[:upper:]' '[:lower:]' )
-          PLATFORM_ARCH=$(uname -m)
       - name: Compress artifacts (tarball)
         if: inputs.upload && (runner.os != 'Windows')
         run: |
-          tar --strip-components=2 \
-            -czvf \
-            clang-cdm-${PLATFORM_OS}-${PLATFORM_ARCH}.tar.gz \
-            llvm/build/bin
+          OS=${{ runner.os }}
+          cd llvm/build && tar -czvf \
+            cdm16-llvm-$(echo $OS || tr '[:upper:]' '[:lower:]')-$(uname -m).tar.gz \
+            bin
       - name: Compress artifacts (zip.. ball?)
         if: inputs.upload && (runner.os == 'Windows')
         run: |
-          tar --strip-components=2 -a -c -f clang-cdm-${PLATFORM_OS}-${PLATFORM_ARCH}.zip llvm/build/bin
+          cd llvm/build && tar -a -c -f cdm16-llvm-windows-$(uname -m).zip bin
       - name: Upload artifacts
         if: inputs.upload
         uses: actions/upload-artifact@v6
@@ -82,5 +76,5 @@ jobs:
           compression-level: 0
           name: ${{ matrix.os }}
           path: |
-            *.tar.gz
-            *.zip
+            ./llvm/build/*.tar.gz
+            ./llvm/build/*.zip
