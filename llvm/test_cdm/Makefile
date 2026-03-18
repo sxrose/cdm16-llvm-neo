@@ -1,13 +1,6 @@
 
 SRC_DIR = src
 VENV_DIR = .venv
-
-ifeq ($(OS),Windows_NT)
-	VENV_BIN_DIR=$(VENV_DIR)/Scripts
-else
-	VENV_BIN_DIR=$(VENV_DIR)/bin
-endif
-
 INCLUDE_DIR = include
 TESTS_DIR = tests
 COMMONS_DIR = commons
@@ -17,16 +10,17 @@ MAIN_SCRIPT = $(SRC_DIR)/main.py
 COMMONS_OBJECTS = $(addprefix $(COMMONS_DIR)/, $(addsuffix .obj, $(basename $(notdir $(wildcard $(COMMONS_DIR)/src/*)))))
 
 test: $(VENV_DIR) $(COMMONS_OBJECTS)
-	$(VENV_BIN_DIR)/python3 $(MAIN_SCRIPT) -c $(CLANG) -I $(INCLUDE_DIR) $(TESTS_DIR)
+	$(VENV_DIR)/bin/python3 $(MAIN_SCRIPT) -c $(CLANG) -I $(INCLUDE_DIR) $(TESTS_DIR)
 
 $(VENV_DIR):
 	python3 -m venv $@
-	$(VENV_BIN_DIR)/pip install -r requirements.txt
+	$(VENV_DIR)/bin/pip install -r requirements.txt
 
 $(COMMONS_DIR)/src/%.asm: $(COMMONS_DIR)/src/%.c
 	$(CLANG) -S -target cdm-cocas -O3 -I $(INCLUDE_DIR) -o $@ $^
 
 $(COMMONS_DIR)/%.obj: $(COMMONS_DIR)/src/%.asm
-	$(VENV_BIN_DIR)/cocas -c -t cdm16 -o $@ $^
+	$(VENV_DIR)/bin/cocas -c -t cdm16 -o $@ $^
+
 
 .PHONY: test
