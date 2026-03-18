@@ -17,7 +17,7 @@ MAIN_SCRIPT = $(SRC_DIR)/main.py
 COMMONS_OBJECTS = $(addprefix $(COMMONS_DIR)/, $(addsuffix .obj, $(basename $(notdir $(wildcard $(COMMONS_DIR)/src/*)))))
 
 test: $(VENV_DIR) $(COMMONS_OBJECTS)
-	$(VENV_DIR)/bin/python3 $(MAIN_SCRIPT) -c $(CLANG) -I $(INCLUDE_DIR) $(TESTS_DIR)
+	$(VENV_BIN_DIR)/python3 $(MAIN_SCRIPT) -c $(CLANG) -I $(INCLUDE_DIR) $(TESTS_DIR)
 
 $(VENV_DIR):
 	python3 -m venv $@

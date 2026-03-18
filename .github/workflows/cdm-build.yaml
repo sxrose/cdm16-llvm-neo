@@ -63,7 +63,7 @@ jobs:
         run: |
           OS=${{ runner.os }}
           cd llvm/build && tar -czvf \
-            cdm16-llvm-$(echo $OS || tr '[:upper:]' '[:lower:]')-$(uname -m).tar.gz \
+            cdm16-llvm-$(echo $OS | tr '[:upper:]' '[:lower:]')-$(uname -m).tar.gz \
             bin
       - name: Compress artifacts (zip.. ball?)
         if: inputs.upload && (runner.os == 'Windows')
