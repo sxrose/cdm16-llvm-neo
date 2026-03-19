@@ -27,10 +27,13 @@ jobs:
         uses: actions/download-artifact@v7
         with:
           path: ./artifacts_download
+      - id: get-version
+        name: Get version
+        run: echo "VERSION=${REF_NAME}" | tr -d "release-" >> $GITHUB_OUTPUT
       - name: Create release
         uses: softprops/action-gh-release@v2
         with:
-          release_name: Release ${{ echo $REF_NAME | tr -d "release-" }}
+          release_name: Release ${{ steps.get-version.outputs.VERSION }}
           draft: false
           prerelease: false
           token: ${{ secrets.GITHUB_TOKEN }}
