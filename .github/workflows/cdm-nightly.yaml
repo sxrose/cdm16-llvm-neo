@@ -22,17 +22,14 @@ jobs:
         uses: actions/download-artifact@v7
         with:
           path: ./artifacts_download
-      - name: Print files list
-        run: find .
       - name: Update Nightly Release
         uses: andelf/nightly-release@main
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tag_name: nightly
-          name: 'LLVM/clang with CdM-16 support nightly build'
+          name: 'Nightly'
           prerelease: true
-          body: 'Nightly release built from main branch'
           files: |
             ${{github.workspace}}/artifacts_download/*/*.tar.gz
             ${{github.workspace}}/artifacts_download/*/*.zip

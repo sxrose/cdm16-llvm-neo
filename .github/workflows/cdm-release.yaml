@@ -3,7 +3,9 @@ name: '[CDM] Release binaries'
 on:
   push:
     tags:
-      - 'ver-*'
+      - 'release-*'
+env:
+  REF_NAME: ${{ github.ref_name }}
 
 jobs:
   build-test:
@@ -28,7 +30,7 @@ jobs:
       - name: Create release
         uses: softprops/action-gh-release@v2
         with:
-          body: LLVM/clang with CdM-16 support release ${{github.ref_name}}
+          release_name: Release ${{ echo $REF_NAME | tr -d "release-" }}
           draft: false
           prerelease: false
           token: ${{ secrets.GITHUB_TOKEN }}
