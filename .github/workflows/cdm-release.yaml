@@ -25,12 +25,10 @@ jobs:
         uses: actions/download-artifact@v7
         with:
           path: ./artifacts_download
-      - name: Print files list
-        run: find .
       - name: Create release
         uses: softprops/action-gh-release@v2
         with:
-          body: clang with CdM-16 support release ${{github.ref_name}}
+          body: LLVM/clang with CdM-16 support release ${{github.ref_name}}
           draft: false
           prerelease: false
           token: ${{ secrets.GITHUB_TOKEN }}

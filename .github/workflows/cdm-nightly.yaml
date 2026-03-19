@@ -30,7 +30,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tag_name: nightly
-          name: 'clang with CdM-16 support nightly build'
+          name: 'LLVM/clang with CdM-16 support nightly build'
           prerelease: true
           body: 'Nightly release built from main branch'
           files: |
