@@ -86,14 +86,14 @@ jobs:
           OS=${{ runner.os }}
           cd llvm/build && tar -czvf \
             cdm16-llvm-$(echo $OS | tr '[:upper:]' '[:lower:]')-$(uname -m).tar.gz \
-              $BINARIES lib/cdm* include/cdm*
+              $BINARIES lib/cdm* lib/clang/21/lib/cdm* include/cdm*
       - name: Compress artifacts (zip.. ball?)
         if: inputs.upload && (runner.os == 'Windows')
         run: |
           cd llvm/build
           WIN_BINARIES=$( for file in $BINARIES; do ([ -f "$file".exe ] && echo "$file".exe); done )
           tar -a -c -f cdm16-llvm-windows-$(uname -m).zip \
-            $WIN_BINARIES lib/cdm* include/cdm*
+            $WIN_BINARIES lib/cdm* lib/clang/21/lib/cdm* include/cdm*
       - name: Upload artifacts
         if: inputs.upload
         uses: actions/upload-artifact@v6
