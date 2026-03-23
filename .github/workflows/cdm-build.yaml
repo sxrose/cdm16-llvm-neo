@@ -91,7 +91,7 @@ jobs:
         run: |
           cd llvm/build
           WIN_BINARIES=$( for file in $BINARIES; do ([ -f "$file".exe ] && echo "$file".exe); done )
-          tar -a -c -f cdm16-llvm-windows-$(uname -m).zip \
+          tar -aczf cdm16-llvm-windows-$(uname -m).zip \
             $WIN_BINARIES lib/cdm* lib/clang/21/lib/cdm* include/cdm*
       - name: Upload artifacts
         if: inputs.upload
