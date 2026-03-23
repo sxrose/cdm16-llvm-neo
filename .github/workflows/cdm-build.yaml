@@ -20,8 +20,7 @@ env:
              bin/llvm-ar \
              bin/llvm-as \
              bin/llvm-dis \
-             bin/llvm-lto \
-             bin/llvm-lto2 \
+             bin/llvm-link \
              bin/llvm-mc \
              bin/llvm-nm \
              bin/llvm-objcopy \
