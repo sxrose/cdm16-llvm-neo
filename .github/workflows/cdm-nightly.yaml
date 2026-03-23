@@ -17,7 +17,7 @@ jobs:
           fetch-depth: 1
       - name: Guard
         continue-on-error: true
-        run: "[[ $(git describe --tags) == nightly ]] && exit 1"
+        run: "[[ $(git describe --tags --always) == nightly ]] && exit 1"
       - name: Shutdown
         if: failure()
         run: |
