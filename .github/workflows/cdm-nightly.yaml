@@ -7,10 +7,28 @@ on:
 
 jobs:
   build-test:
-    uses: ./.github/workflows/cdm-build.yaml
-    with:
-      static-build: true
-      upload: true
+    permissions:
+      actions: 'write'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+      - name: Guard
+        continue-on-error: true
+        run: "[[ $(git describe --tags) == nightly ]] && exit 1"
+      - name: Shutdown
+        if: failure()
+        run: |
+          gh run cancel ${{ github.run_id }}
+          gh run watch ${{ github.run_id }}
+        env:
+          GH_TOKEN: ${{ secrets. GITHUB_TOKEN }}
+      - uses: ./.github/workflows/cdm-build.yaml
+        with:
+          static-build: true
+          upload: true
 
   release:
     needs: build-test
@@ -29,7 +47,7 @@ jobs:
         with:
           tag_name: nightly
           name: 'Nightly'
-          body: ' '
+          body: 'Built from main branch every night. Stability of features is not guaranteed. Use at your own risk.'
           prerelease: true
           files: |
             ${{github.workspace}}/artifacts_download/*/*.tar.gz
