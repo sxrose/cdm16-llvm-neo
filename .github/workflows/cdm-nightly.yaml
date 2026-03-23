@@ -47,7 +47,7 @@ jobs:
         with:
           tag_name: nightly
           name: 'Nightly'
-          body: 'Built from main branch every night. Stability of features is not guaranteed. Use at your own risk.'
+          body: 'Nightly releases are made every night. They contain the newest features and fixes, but may be unstable.'
           prerelease: true
           files: |
             ${{github.workspace}}/artifacts_download/*/*.tar.gz
